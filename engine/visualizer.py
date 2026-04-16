@@ -3,19 +3,33 @@ engine/visualizer.py
 --------------------
 Plan Tree Visualizer
 
-Provides a utility class `PlanVisualizer` that converts a PlanNode tree into
-a rich, multi-line ASCII-art string suitable for display in terminals or
-web interfaces (e.g., Streamlit `st.code` blocks).
+Provides a utility class ``PlanVisualizer`` that converts a PlanNode tree into
+a rich, multi-line ASCII string suitable for display in terminals or web
+interfaces (e.g., Streamlit tree-container blocks).
 
 The output uses box-drawing characters to make the tree structure clear:
 
-    📋 Project [ users.name, countries.country_name ]
-    └── 🔗 InnerJoin [ ON cities.country_id = countries.id ]
-         ├── 🔗 InnerJoin [ ON users.city_id = cities.id ]
-         │    ├── 🔍 Filter [ users.id > 500 ]
-         │    │    └── 📂 SeqScan [ users ]
-         │    └── 📂 SeqScan [ cities ]
-         └── 📂 SeqScan [ countries ]
+    Project [ users.name, countries.country_name ]
+    └── InnerJoin [ ON cities.country_id = countries.id ]
+         ├── InnerJoin [ ON users.city_id = cities.id ]
+         │    ├── Filter [ users.id > 500 ]
+         │    │    └── SeqScan [ users ]
+         │    └── SeqScan [ cities ]
+         └── SeqScan [ countries ]
+
+Outer-join example:
+
+    Project [ users.name, orders.amount ]
+    └── LeftJoin [ ON users.id = orders.user_id ]
+         ├── Filter [ users.id > 5 ]
+         │    └── SeqScan [ users ]
+         └── SeqScan [ orders ]
+
+OR-filter example:
+
+    Project [ users.id, users.name ]
+    └── OrFilter [ users.id > 5 OR users.id < 2 ]
+         └── SeqScan [ users ]
 
 Usage::
 
@@ -30,11 +44,13 @@ from __future__ import annotations
 from typing import List
 
 from engine.nodes import (
+    AggregateNode,
     JoinNode,
     PlanNode,
     ProjectNode,
     ScanNode,
     SelectNode,
+    SubqueryNode,
 )
 
 
@@ -44,17 +60,20 @@ class PlanVisualizer:
 
     Internals
     ---------
-    The renderer walks the tree recursively, passing a *prefix* string that
-    encodes the "branch" context (using │ pipe characters for open branches
-    and spaces for closed ones).  This allows us to produce correctly aligned
-    connectors at every level without a two-pass approach.
+    The renderer walks the tree recursively, threading a *prefix* string that
+    encodes the branch context (``│`` pipe characters for open branches,
+    spaces for closed ones).  This produces correctly-aligned connectors at
+    every level without a two-pass approach.
+
+    No emoji are used — the output is strictly ASCII + box-drawing so it
+    renders correctly in monospace containers regardless of font support.
     """
 
     # Box-drawing characters used for the tree layout.
-    _PIPE    = "│   "   # vertical continuation
-    _TEE     = "├── "   # non-last sibling connector
-    _CORNER  = "└── "   # last sibling connector
-    _BLANK   = "    "   # continuation under a last sibling
+    _PIPE   = "│   "   # vertical continuation line
+    _TEE    = "├── "   # non-last sibling connector
+    _CORNER = "└── "   # last sibling connector
+    _BLANK  = "    "   # continuation under a last-sibling branch
 
     def render(self, root: PlanNode) -> str:
         """
@@ -90,35 +109,60 @@ class PlanVisualizer:
             is_last : True if this node is the last child of its parent.
             lines   : Accumulated output lines (mutated in place).
         """
-        connector = self._CORNER if is_last else self._TEE
+        connector    = self._CORNER if is_last else self._TEE
+        child_prefix = prefix + (self._BLANK if is_last else self._PIPE)
 
+        # ── SeqScan ──────────────────────────────────────────────────
         if isinstance(node, ScanNode):
-            lines.append(f"{prefix}{connector}📂 SeqScan [ {node.table_name} ]")
+            label = (
+                f"{node.table_name} AS {node.alias}"
+                if node.alias
+                else node.table_name
+            )
+            lines.append(f"{prefix}{connector}SeqScan [ {label} ]")
 
+        # ── Filter (WHERE / OR-block) ─────────────────────────────────
         elif isinstance(node, SelectNode):
-            lines.append(f"{prefix}{connector}🔍 Filter [ {node.predicate} ]")
-            child_prefix = prefix + (self._BLANK if is_last else self._PIPE)
+            tag = "OrFilter" if node.is_or_block else "Filter"
+            lines.append(f"{prefix}{connector}{tag} [ {node.predicate} ]")
             self._render_node(node.child, child_prefix, is_last=True, lines=lines)
 
+        # ── Project ───────────────────────────────────────────────────
         elif isinstance(node, ProjectNode):
             cols = ", ".join(node.columns) if node.columns else "*"
-            lines.append(f"{prefix}{connector}📋 Project [ {cols} ]")
-            child_prefix = prefix + (self._BLANK if is_last else self._PIPE)
+            lines.append(f"{prefix}{connector}Project [ {cols} ]")
             self._render_node(node.child, child_prefix, is_last=True, lines=lines)
 
+        # ── Join (INNER / LEFT / RIGHT / FULL / CROSS) ────────────────
         elif isinstance(node, JoinNode):
+            # Capitalise so it reads: InnerJoin, LeftJoin, RightJoin, etc.
+            label = f"{node.join_type.capitalize()}Join"
             lines.append(
-                f"{prefix}{connector}🔗 InnerJoin [ ON {node.condition} ]"
+                f"{prefix}{connector}{label} [ ON {node.condition} ]"
             )
-            child_prefix = prefix + (self._BLANK if is_last else self._PIPE)
-            # Left child is NOT last (right comes after it).
+            # Left child is NOT last (right comes after).
             self._render_node(node.left,  child_prefix, is_last=False, lines=lines)
             # Right child IS last.
             self._render_node(node.right, child_prefix, is_last=True,  lines=lines)
 
+        # ── Aggregate (GROUP BY / HAVING) ─────────────────────────────
+        elif isinstance(node, AggregateNode):
+            gb_str  = ", ".join(node.group_by_cols) if node.group_by_cols else "(none)"
+            agg_str = ", ".join(node.aggregates)     if node.aggregates    else "(none)"
+            having_part = f" | HAVING {node.having}" if node.having else ""
+            lines.append(
+                f"{prefix}{connector}Aggregate [ GROUP BY {gb_str} | {agg_str}{having_part} ]"
+            )
+            self._render_node(node.child, child_prefix, is_last=True, lines=lines)
+
+        # ── Subquery (CTE / inline subquery) ──────────────────────────
+        elif isinstance(node, SubqueryNode):
+            lines.append(f"{prefix}{connector}Subquery [ {node.alias} ]")
+            self._render_node(node.child, child_prefix, is_last=True, lines=lines)
+
+        # ── Unknown node type — graceful fallback ─────────────────────
         else:
-            # Unknown node type — render a generic representation.
-            lines.append(f"{prefix}{connector}⚙ {type(node).__name__}")
+            lines.append(f"{prefix}{connector}{type(node).__name__}")
 
     # ------------------------------------------------------------------
     # Additional utilities
@@ -145,7 +189,7 @@ class PlanVisualizer:
         Returns:
             A formatted string with both trees, labelled and separated.
         """
-        sep   = "═" * 60
+        sep    = "=" * 60
         tree_a = self.render(root_a)
         tree_b = self.render(root_b)
         return (
@@ -165,24 +209,31 @@ class PlanVisualizer:
         Return a one-line summary of the plan: list of operator types from
         root to the first leaf.
 
-        Example: "Project → Filter → Join → Scan"
+        Example: ``"Project -> Aggregate -> LeftJoin -> Scan(users)"``
         """
         parts: List[str] = []
-        node = root
+        node: PlanNode | None = root
         while node is not None:
             if isinstance(node, ProjectNode):
                 parts.append("Project")
                 node = node.child
+            elif isinstance(node, AggregateNode):
+                parts.append("Aggregate")
+                node = node.child
             elif isinstance(node, SelectNode):
-                parts.append("Filter")
+                tag = "OrFilter" if node.is_or_block else "Filter"
+                parts.append(tag)
                 node = node.child
             elif isinstance(node, JoinNode):
-                parts.append("Join")
+                parts.append(f"{node.join_type.capitalize()}Join")
                 node = node.left   # Follow left branch for summary
+            elif isinstance(node, SubqueryNode):
+                parts.append(f"Subquery({node.alias})")
+                break
             elif isinstance(node, ScanNode):
                 parts.append(f"Scan({node.table_name})")
                 break
             else:
                 parts.append(type(node).__name__)
                 break
-        return " → ".join(parts)
+        return " -> ".join(parts)

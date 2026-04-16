@@ -1,2 +1,3 @@
 sqlparse
+sqlglot
 streamlit

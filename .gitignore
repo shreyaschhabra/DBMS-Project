@@ -1,0 +1,8 @@
+.venv/
+.git/
+.python-version
+pyproject.toml
+uv.lock
+.env
+.gitignore.swp
+engine/__pycache__
