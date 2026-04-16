@@ -1,4 +1,4 @@
-.venv/
+venv/
 .git/
 .python-version
 pyproject.toml
@@ -6,3 +6,8 @@ uv.lock
 .env
 .gitignore.swp
 engine/__pycache__
+*.pem
+__pycache__/
+*.log
+__init.py__
+.DS_Store

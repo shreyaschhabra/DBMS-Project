@@ -94,11 +94,11 @@ The app will open automatically in your browser at **http://localhost:8501**.
 
 Simulates a database system catalog (like PostgreSQL's `pg_statistic`).
 
-| Table       | Row Count | Columns                          |
-|-------------|-----------|----------------------------------|
-| `users`     | 10,000    | `id`, `name`, `city_id`          |
-| `cities`    | 100       | `id`, `city_name`, `country_id`  |
-| `countries` | 10        | `id`, `country_name`             |
+| Table       | Row Count | Columns                         |
+| ----------- | --------- | ------------------------------- |
+| `users`     | 10,000    | `id`, `name`, `city_id`         |
+| `cities`    | 100       | `id`, `city_name`, `country_id` |
+| `countries` | 10        | `id`, `country_name`            |
 
 **Key methods:**
 
@@ -115,14 +115,15 @@ catalog.get_all_stats()            # → {table: {row_count, columns}, ...}
 
 Defines the building blocks of a query plan tree, each subclassing `PlanNode`:
 
-| Class          | Operator         | Analogy                          |
-|----------------|------------------|----------------------------------|
-| `ScanNode`     | SeqScan          | `FROM table` — reads all rows    |
-| `SelectNode`   | Filter (σ)       | `WHERE condition`                |
-| `ProjectNode`  | Projection (π)   | `SELECT col1, col2`              |
-| `JoinNode`     | Inner Join (⋈)   | `JOIN table ON condition`        |
+| Class         | Operator       | Analogy                       |
+| ------------- | -------------- | ----------------------------- |
+| `ScanNode`    | SeqScan        | `FROM table` — reads all rows |
+| `SelectNode`  | Filter (σ)     | `WHERE condition`             |
+| `ProjectNode` | Projection (π) | `SELECT col1, col2`           |
+| `JoinNode`    | Inner Join (⋈) | `JOIN table ON condition`     |
 
 Each node has:
+
 - `explain(depth)` — returns ASCII tree string
 - `source_tables` — returns the set of base tables reachable from this node
 
@@ -131,6 +132,7 @@ Each node has:
 ### `engine/parser.py` — SQL Parser
 
 Uses `sqlparse` to tokenize raw SQL, then extracts:
+
 - **SELECT columns** → `ProjectNode`
 - **FROM clause** → primary `ScanNode`
 - **JOIN … ON clauses** → chain of `JoinNode`s
@@ -167,6 +169,7 @@ Applies **two algebraic rewrite rules** in sequence:
 > Move WHERE filter predicates as close to the base data (scan) as possible.
 
 **Before (filter sits above all joins):**
+
 ```
 Project [users.name, countries.country_name]
 └── Filter [users.id > 500]           ← filter is HIGH in the tree
@@ -178,6 +181,7 @@ Project [users.name, countries.country_name]
 ```
 
 **After Predicate Pushdown (filter pushed to scan level):**
+
 ```
 Project [users.name, countries.country_name]
 └── InnerJoin [...]
@@ -189,6 +193,7 @@ Project [users.name, countries.country_name]
 ```
 
 **Algorithm:**
+
 1. Walk the tree recursively top-down.
 2. When a `SelectNode` is found above a `JoinNode`, extract the tables mentioned in the predicate.
 3. If the predicate references only one side of the join → push it down to that side.
@@ -203,16 +208,19 @@ Project [users.name, countries.country_name]
 **Why this matters:** In a real database engine, each row passing through the operator pipeline carries all its columns in memory. If a table has 20 columns but the query only needs 2, the other 18 are wasted RAM through every join and filter. Projection Pushdown fixes this by **dropping unnecessary columns at the scan boundary** — before any data moves further up the tree.
 
 **Savings in a real system:**
+
 - 🧠 **RAM** — row buffers are narrower; more rows fit per memory page
 - 🌐 **Network bandwidth** — in distributed systems (e.g., Spark, distributed SQL), narrower rows mean less data shipped between nodes
 - 💾 **I/O** — columnar stores can skip entire column files entirely
 
 **What the algorithm does:**
-1. Collect all `table.column` references used anywhere in the tree (SELECT list, WHERE predicates, JOIN ON conditions) into a *required columns* set.
+
+1. Collect all `table.column` references used anywhere in the tree (SELECT list, WHERE predicates, JOIN ON conditions) into a _required columns_ set.
 2. Walk the tree; for every `ScanNode`, look up its catalog columns and compute which are in the required set.
 3. Insert a `ProjectNode(columns=[needed_cols])` immediately above the `ScanNode` to drop the rest.
 
 **After Projection Pushdown (narrow ProjectNodes inserted above scans):**
+
 ```
 Project [users.name, countries.country_name]
 └── InnerJoin [ON cities.country_id = countries.id]
@@ -247,11 +255,11 @@ For 3 tables (6 possible orderings), the CBO evaluates all permutations and choo
 
 **Example (default query):**
 
-| Ordering                              | Cost             |
-|---------------------------------------|------------------|
+| Ordering                                    | Cost                                    |
+| ------------------------------------------- | --------------------------------------- |
 | users(10,000) ⋈ cities(100) ⋈ countries(10) | 1,000,000 + 10,000,000 = **11,000,000** |
-| countries(10) ⋈ cities(100) ⋈ users(10,000) | 1,000 + 10,000,000 = **10,001,000** |
-| **countries(10) ⋈ cities(100) → minimized** | **smallest first wins** |
+| countries(10) ⋈ cities(100) ⋈ users(10,000) | 1,000 + 10,000,000 = **10,001,000**     |
+| **countries(10) ⋈ cities(100) → minimized** | **smallest first wins**                 |
 
 ---
 
@@ -272,6 +280,7 @@ Converts any `PlanNode` tree to a clean, readable string:
 Box-drawing characters used: `├──`, `└──`, `│`
 
 **Usage:**
+
 ```python
 from engine.visualizer import PlanVisualizer
 vis = PlanVisualizer()
@@ -302,6 +311,7 @@ The interactive web application features:
 ## 🧪 Example Queries to Try
 
 ### Example 1 — Default (3 tables, with WHERE)
+
 ```sql
 SELECT users.name, countries.country_name
 FROM users
@@ -311,6 +321,7 @@ WHERE users.id > 500
 ```
 
 ### Example 2 — Two table join
+
 ```sql
 SELECT users.name, cities.city_name
 FROM users
@@ -319,6 +330,7 @@ WHERE users.id > 100
 ```
 
 ### Example 3 — Single table scan + filter
+
 ```sql
 SELECT users.name
 FROM users
@@ -326,6 +338,7 @@ WHERE users.id > 9000
 ```
 
 ### Example 4 — No WHERE clause
+
 ```sql
 SELECT users.name, cities.city_name, countries.country_name
 FROM users
@@ -337,32 +350,33 @@ JOIN countries ON cities.country_id = countries.id
 
 ## 🏗️ Architecture Decisions
 
-| Decision                          | Rationale                                                      |
-|-----------------------------------|----------------------------------------------------------------|
-| No sqlite / SQLAlchemy            | Keeps the focus on the optimizer logic, not storage            |
-| `dataclasses` for nodes           | Clean, self-documenting, minimal boilerplate                   |
-| Regex-based SQL extraction        | Lightweight; avoids heavy AST library for simple SELECT subset |
-| `itertools.permutations` for CBO  | Exhaustive but correct for ≤3 tables (max 6 orderings)        |
-| `copy.deepcopy` for each stage    | Ensures each pipeline stage gets a fresh tree to mutate safely |
-| Stateless optimizers              | Re-create per query; no hidden state bugs between requests     |
+| Decision                         | Rationale                                                      |
+| -------------------------------- | -------------------------------------------------------------- |
+| No sqlite / SQLAlchemy           | Keeps the focus on the optimizer logic, not storage            |
+| `dataclasses` for nodes          | Clean, self-documenting, minimal boilerplate                   |
+| Regex-based SQL extraction       | Lightweight; avoids heavy AST library for simple SELECT subset |
+| `itertools.permutations` for CBO | Exhaustive but correct for ≤3 tables (max 6 orderings)         |
+| `copy.deepcopy` for each stage   | Ensures each pipeline stage gets a fresh tree to mutate safely |
+| Stateless optimizers             | Re-create per query; no hidden state bugs between requests     |
 
 ---
 
 ## 📚 Key Concepts Illustrated
 
-| Concept                    | Where Applied                         | Real DB Equivalent               |
-|----------------------------|---------------------------------------|----------------------------------|
-| AST / Parse Tree           | `parser.py`                           | pg parser / bison grammar        |
-| Logical Plan               | `nodes.py`                            | Volcano model / Cascades         |
-| Predicate Pushdown (RBO)   | `rbo.py` — `_apply_predicate_pushdown`| PostgreSQL `prepjointree.c`      |
-| Projection Pushdown (RBO)  | `rbo.py` — `_apply_projection_pushdown`| MySQL `Item_field` pruning      |
-| Cardinality Statistics     | `catalog.py`                          | `pg_statistic` / `ANALYZE`       |
-| Cost Model                 | `cbo.py` — join cost formula          | Selinger optimizer               |
-| Plan Enumeration           | `cbo.py` — permutations               | DP table in Volcano/Columbia     |
-| Explain Output             | `visualizer.py`                       | `EXPLAIN` / `EXPLAIN ANALYZE`    |
+| Concept                   | Where Applied                           | Real DB Equivalent            |
+| ------------------------- | --------------------------------------- | ----------------------------- |
+| AST / Parse Tree          | `parser.py`                             | pg parser / bison grammar     |
+| Logical Plan              | `nodes.py`                              | Volcano model / Cascades      |
+| Predicate Pushdown (RBO)  | `rbo.py` — `_apply_predicate_pushdown`  | PostgreSQL `prepjointree.c`   |
+| Projection Pushdown (RBO) | `rbo.py` — `_apply_projection_pushdown` | MySQL `Item_field` pruning    |
+| Cardinality Statistics    | `catalog.py`                            | `pg_statistic` / `ANALYZE`    |
+| Cost Model                | `cbo.py` — join cost formula            | Selinger optimizer            |
+| Plan Enumeration          | `cbo.py` — permutations                 | DP table in Volcano/Columbia  |
+| Explain Output            | `visualizer.py`                         | `EXPLAIN` / `EXPLAIN ANALYZE` |
 
 ---
 
 ## 📝 License
 
 This project is for educational purposes — built as a DBMS course project to illustrate the internals of a query optimizer.
+Generate your own ssh key + certificate using command `openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes`
