@@ -1,38 +1,4 @@
-"""
-engine/nodes.py
----------------
-Relational Algebra Tree Nodes
-
-Every node represents a single relational-algebra operation:
-  - ScanNode      — full sequential scan of a base table
-  - SelectNode    — filter rows by a predicate (WHERE / OR-block)
-  - ProjectNode   — project a subset of columns (SELECT list)
-  - JoinNode      — inner, left, or right join on a condition
-  - AggregateNode — aggregate rows (GROUP BY / HAVING)
-  - SubqueryNode  — derived table — a CTE or inline subquery
-
-SQL Unparser — Flattening Strategy
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The unparser collects the entire join spine into a ``_JoinPlan`` structure
-(tables, join conditions, predicates) and renders it as a single flat query:
-
-    SELECT cols
-    FROM   t1
-    JOIN   t2  ON t1.x = t2.y
-    JOIN   t3  ON t2.z = t3.w
-    WHERE  pred1 AND pred2
-
-Rules:
-  1. Project → JoinSpine  → SELECT cols FROM ... JOIN ... [WHERE ...]
-  2. Project → Scan       → SELECT cols FROM table [WHERE pred_from_Select]
-  3. Select  → Scan       → SELECT * FROM table WHERE pred
-  4. bare Scan            → SELECT * FROM table
-
-Subquery wrapping is ONLY emitted for:
-  - SubqueryNode (CTE / derived table by definition)
-  - AggregateNode over a complex child
-  - Arms that are themselves a SubqueryNode / AggregateNode
-"""
+""" nodes.py """
 
 from __future__ import annotations
 

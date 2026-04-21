@@ -1,16 +1,4 @@
-"""
-engine/catalog.py
------------------
-Mock Database Catalog
-Simulates a real database's system catalog (pg_stats, information_schema, etc.)
-Provides metadata like row counts (cardinality) used by the Cost-Based Optimizer.
-
-Now supports dynamic mutation via:
-    add_table()            — add or overwrite a table entry
-    remove_table()         — remove a table entry
-    sync_from_dataframe()  — bulk-update from a pandas DataFrame
-    to_dataframe()         — export current catalog as a DataFrame (for st.data_editor)
-"""
+""" catalog.py """
 
 from dataclasses import dataclass, field
 from typing import Dict, List

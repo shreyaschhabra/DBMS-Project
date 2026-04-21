@@ -11,3 +11,4 @@ __pycache__/
 *.log
 __init.py__
 .DS_Store
+dataset/

@@ -1,15 +1,4 @@
-"""
-app.py
-------
-Mini Query Optimizer — Interactive Streamlit Frontend  v3.0
-
-Pipeline:
-    SQL Input → Parse → Logical Plan → RBO → CBO → Physical Plan → SQL Unparser
-    (optional) Live MySQL → Schema Sync + Benchmark Unoptimized vs Optimized SQL
-
-Run with:
-    uv run streamlit run app.py
-"""
+""" app.py """
 
 from __future__ import annotations
 
@@ -33,8 +22,8 @@ from engine.visualizer import PlanVisualizer
 # ─────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Mini Query Optimizer",
-    page_icon="⚡",
+    page_title="Query Optimizer",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -494,19 +483,19 @@ WHERE olist_orders_dataset.order_status = 'delivered'"""
 with st.sidebar:
     st.markdown(
         """
-        <div class="sidebar-app-name">⚡ Query Optimizer</div>
-        <div class="sidebar-app-version">SQL Engine Simulator &nbsp;·&nbsp; v3.0</div>
+        <div class="sidebar-app-name">Query Optimizer</div>
+        <div class="sidebar-app-version">SQL Optimizer UI</div>
         """,
         unsafe_allow_html=True,
     )
     st.markdown("---")
 
-    # ── 🔌 Live DB Connection ─────────────────────────────────────────────
-    st.markdown("<div class='section-label'>🔌 Live DB Connection</div>", unsafe_allow_html=True)
+    # ── Live DB Connection ─────────────────────────────────────────────
+    st.markdown("<div class='section-label'>Live DB Connection</div>", unsafe_allow_html=True)
 
     if db_manager and db_manager.is_connected:
         st.markdown(
-            f"<div class='db-connected-badge'>● Connected — {db_manager.database}</div>",
+            f"<div class='db-connected-badge'>Connected — {db_manager.database}</div>",
             unsafe_allow_html=True,
         )
         if st.button("Disconnect", key="btn_disconnect", use_container_width=True):
@@ -514,6 +503,10 @@ with st.sidebar:
             st.session_state["db_manager"] = None
             st.rerun()
     else:
+        # Checking if the app is running locally
+        host_header = st.context.headers.get("host", "")
+        is_local = host_header.startswith("localhost") or host_header.startswith("127.0.0.1")
+
         # Credential inputs — pre-filled from .env defaults
         import os
         try:
@@ -522,11 +515,26 @@ with st.sidebar:
         except ImportError:
             pass
 
-        db_host = st.text_input("Host",     value=os.getenv("DB_HOST", "localhost"), key="db_host")
-        db_port = st.number_input("Port",   value=int(os.getenv("DB_PORT", "3306")), min_value=1, max_value=65535, key="db_port")
-        db_user = st.text_input("User",     value=os.getenv("DB_USER", "root"),      key="db_user")
-        db_pass = st.text_input("Password", value=os.getenv("DB_PASSWORD", ""),      key="db_pass", type="password")
-        db_name = st.text_input("Database", value=os.getenv("DB_NAME", ""),          key="db_name")
+        if is_local:
+            def_host = os.getenv("DB_HOST", "localhost")
+            def_port = int(os.getenv("DB_PORT", "3306"))
+            def_user = os.getenv("DB_USER", "root")
+            def_pass = os.getenv("DB_PASSWORD", "")
+            def_name = os.getenv("DB_NAME", "")
+        else:
+            # For network users, keep it blank/generic
+            def_host = "localhost"
+            def_port = 3306
+            def_user = ""
+            def_pass = ""
+            def_name = ""
+
+        # 3. Use the determined default values in the UI
+        db_host = st.text_input("Host",     value=def_host, key="db_host")
+        db_port = st.number_input("Port",   value=def_port, min_value=1, max_value=65535, key="db_port")
+        db_user = st.text_input("User",     value=def_user, key="db_user")
+        db_pass = st.text_input("Password", value=def_pass, key="db_pass", type="password")
+        db_name = st.text_input("Database", value=def_name, key="db_name")
 
         if st.button("Connect & Sync Catalog", key="btn_connect", use_container_width=True):
             with st.spinner("Connecting to MySQL…"):
@@ -553,7 +561,7 @@ with st.sidebar:
     st.markdown("<div class='section-label'>Database Catalog</div>", unsafe_allow_html=True)
     st.markdown(
         "<p style='color:var(--text-muted);font-size:0.78rem;margin-bottom:0.6rem;line-height:1.5'>"
-        "Live statistics used by the CBO. Edit in the ⚙️ Schema tab.</p>",
+        "Live statistics used by the CBO. Edit in the Schema tab.</p>",
         unsafe_allow_html=True,
     )
 
@@ -577,7 +585,7 @@ with st.sidebar:
     if len(all_stats) > 8:
         st.markdown(
             f"<p style='font-size:0.72rem;color:var(--text-muted);margin:0.3rem 0 0.6rem'>"
-            f"+ {len(all_stats)-8} more tables — see ⚙️ Schema tab</p>",
+            f"+ {len(all_stats)-8} more tables — see Schema tab</p>",
             unsafe_allow_html=True,
         )
 
@@ -619,7 +627,7 @@ live_db = db_manager is not None and db_manager.is_connected
 st.markdown(
     f"""
     <div class="page-header">
-        <div class="page-header-title">Mini Query Optimizer</div>
+        <div class="page-header-title">Query Optimizer</div>
         <div class="page-header-desc">
             Parses SQL, builds relational-algebra plans, applies RBO + CBO optimization,
             unparsed back to SQL, {"and benchmarks both against a live MySQL instance." if live_db else
@@ -662,7 +670,7 @@ sql_input = st.text_area(
 
 col_btn, col_hint = st.columns([1, 5])
 with col_btn:
-    run_clicked = st.button("⚡ Optimize Query", use_container_width=True, key="btn_optimize")
+    run_clicked = st.button("Optimize Query", use_container_width=True, key="btn_optimize")
 with col_hint:
     hint = "Connected to MySQL — will benchmark both plans live." if live_db else \
            "Connect a MySQL database in the sidebar to enable live benchmarking."
@@ -774,12 +782,12 @@ if run_clicked or sql_input:
 
         # ── Tabs ───────────────────────────────────────────────────────────
         tab_labels = [
-            "📋 Logical Plan",
-            "🔧 After RBO",
-            "🎯 Physical Plan",
-            "⚙️ Schema Editor",
-            "⏱️ Live Metrics",
-            "🐛 Debug",
+            "Logical Plan",
+            "After RBO",
+            "Physical Plan",
+            "Schema Editor",
+            "Live Metrics",
+            "Debug",
         ]
         tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(tab_labels)
 
@@ -789,8 +797,7 @@ if run_clicked or sql_input:
         with tab1:
             st.markdown(
                 "<div class='tab-section-title'>Unoptimized Logical Plan</div>"
-                "<div class='tab-section-desc'>Raw relational-algebra tree from the parser. "
-                "The <code>WHERE</code> filter sits high — no optimization applied yet.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.markdown(f'<div class="tree-container">{logical_str}</div>', unsafe_allow_html=True)
@@ -801,8 +808,7 @@ if run_clicked or sql_input:
         with tab2:
             st.markdown(
                 "<div class='tab-section-title'>After Predicate Pushdown</div>"
-                "<div class='tab-section-desc'>Filters pushed to scan level — "
-                "fewer rows flow into expensive JOINs.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.markdown(f'<div class="tree-container">{pred_push_str}</div>', unsafe_allow_html=True)
@@ -820,8 +826,7 @@ if run_clicked or sql_input:
             st.markdown("---")
             st.markdown(
                 "<div class='tab-section-title'>After Projection Pushdown</div>"
-                "<div class='tab-section-desc'>Narrow <code>ProjectNode</code>s inserted above "
-                "scans — unused columns dropped as early as possible.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.markdown(f'<div class="tree-container">{proj_push_str}</div>', unsafe_allow_html=True)
@@ -842,8 +847,7 @@ if run_clicked or sql_input:
         with tab3:
             st.markdown(
                 "<div class='tab-section-title'>Final Optimized Physical Plan</div>"
-                "<div class='tab-section-desc'>CBO reorders joins for minimum intermediate size. "
-                "All RBO <code>Filter</code> and <code>Project</code> nodes are preserved.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.markdown(f'<div class="tree-container">{physical_str}</div>', unsafe_allow_html=True)
@@ -858,9 +862,7 @@ if run_clicked or sql_input:
                 "<div class='sql-unparser-header'>"
                 "<div class='tab-section-title' style='margin:0'>Equivalent SQL</div>"
                 "<span class='sql-unparser-badge'>SQL Unparser</span></div>"
-                "<div class='tab-section-desc'>Optimized plan tree recursively traversed to "
-                "regenerate valid MySQL SQL. Each nested operator → subquery with unique "
-                "<code>subq_N</code> alias.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.code(optimized_sql, language="sql")
@@ -868,7 +870,7 @@ if run_clicked or sql_input:
             st.markdown("---")
             st.markdown(
                 "<div class='tab-section-title'>Side-by-Side Comparison</div>"
-                "<div class='tab-section-desc'>Original logical plan vs final optimized physical plan.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             col_l, col_r = st.columns(2)
@@ -885,14 +887,12 @@ if run_clicked or sql_input:
         with tab4:
             st.markdown(
                 "<div class='tab-section-title'>Dynamic Schema Editor</div>"
-                "<div class='tab-section-desc'>Edit the catalog the CBO uses for cost estimation. "
-                "Changes take effect on the next optimization run. "
-                "Use 'Connect & Sync Catalog' in the sidebar to auto-populate from a live DB.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             st.markdown(
                 "<div class='schema-info'>"
-                "📝 <strong>How to use:</strong> Edit row counts or column lists in-place. "
+                "<strong>How to use:</strong> Edit row counts or column lists in-place. "
                 "Add rows via the <strong>+</strong> button; delete via row menu. "
                 "Click <strong>Apply Schema Changes</strong> when done.<br><br>"
                 "The <strong>columns</strong> field is comma-separated "
@@ -928,7 +928,7 @@ if run_clicked or sql_input:
                     st.rerun()
             with sync_col:
                 if live_db:
-                    if st.button("🔄 Re-Sync from DB", use_container_width=True, key="resync_schema"):
+                    if st.button("Re-Sync from DB", use_container_width=True, key="resync_schema"):
                         with st.spinner("Syncing schema…"):
                             try:
                                 updated, n = db_manager.sync_schema_to_catalog(catalog)
@@ -956,7 +956,7 @@ if run_clicked or sql_input:
                 st.markdown(
                     "<div style='margin-top:1.5rem;padding:1.5rem;background:var(--bg-secondary);"
                     "border:1px solid var(--border);border-radius:8px;text-align:center'>"
-                    "<div style='font-size:1.5rem;margin-bottom:0.5rem'>🔌</div>"
+                    "<div style='font-size:1.5rem;margin-bottom:0.5rem'></div>"
                     "<div style='font-weight:600;color:var(--text-primary);margin-bottom:0.3rem'>"
                     "No Live Database Connected</div>"
                     "<div style='font-size:0.85rem;color:var(--text-muted)'>"
@@ -970,9 +970,7 @@ if run_clicked or sql_input:
                     "<div class='metrics-compare-header'>"
                     "<div class='tab-section-title' style='margin:0'>Live Execution Metrics</div>"
                     "<span class='metrics-badge'>MySQL Benchmarks</span></div>"
-                    "<div class='tab-section-desc'>"
-                    "Both the original SQL and the optimizer-generated SQL were executed on the "
-                    "live MySQL instance. Metrics are compared side-by-side.<br>"
+                    "<div class='tab-section-desc'></div>"
                     "<strong>Rows Returned</strong> should match — proving semantic correctness. "
                     "<strong>Time</strong> and <strong>MySQL Cost</strong> should be lower for "
                     "the optimized plan (delta shown in green = improvement)."
@@ -989,9 +987,9 @@ if run_clicked or sql_input:
                 # Column headers
                 _, hc1, hc2 = st.columns([0.8, 2, 2])
                 with hc1:
-                    st.markdown("<div class='metrics-col-header unopt'>🔴 Unoptimized SQL</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='metrics-col-header unopt'>Unoptimized SQL</div>", unsafe_allow_html=True)
                 with hc2:
-                    st.markdown("<div class='metrics-col-header opt'>🟢 Optimized SQL</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='metrics-col-header opt'>Optimized SQL</div>", unsafe_allow_html=True)
 
                 def safe_get(d, key, default=0):
                     return d.get(key, default) if d else default
@@ -1035,7 +1033,7 @@ if run_clicked or sql_input:
                     st.markdown(
                         "<div style='font-size:0.75rem;font-weight:600;color:var(--text-muted);"
                         "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
-                        "📦 Rows</div>",
+                        "Rows</div>",
                         unsafe_allow_html=True,
                     )
                 with mc3:
@@ -1049,7 +1047,7 @@ if run_clicked or sql_input:
                     st.metric(
                         label="Optimized — Rows",
                         value=f"{r_opt:,}",
-                        delta=f"{delta_r:+,}" if delta_r != 0 else "✓ Match",
+                        delta=f"{delta_r:+,}" if delta_r != 0 else "Match",
                         delta_color="off" if delta_r == 0 else "normal",
                         label_visibility="collapsed",
                     )
@@ -1060,7 +1058,7 @@ if run_clicked or sql_input:
                     st.markdown(
                         "<div style='font-size:0.75rem;font-weight:600;color:var(--text-muted);"
                         "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
-                        "💰 MySQL Cost</div>",
+                        "MySQL Cost</div>",
                         unsafe_allow_html=True,
                     )
                 with mc5:
@@ -1084,15 +1082,15 @@ if run_clicked or sql_input:
                 # Raw SQL side-by-side
                 st.markdown(
                     "<div class='tab-section-title'>Query SQL Comparison</div>"
-                    "<div class='tab-section-desc'>The exact SQL strings sent to MySQL.</div>",
+                    "<div class='tab-section-desc'></div>",
                     unsafe_allow_html=True,
                 )
                 csql1, csql2 = st.columns(2)
                 with csql1:
-                    st.markdown("<div class='compare-label'>🔴 Unoptimized (original input)</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='compare-label'>Unoptimized (original input)</div>", unsafe_allow_html=True)
                     st.code(sql_input.strip(), language="sql")
                 with csql2:
-                    st.markdown("<div class='compare-label'>🟢 Optimized (SQL Unparser output)</div>", unsafe_allow_html=True)
+                    st.markdown("<div class='compare-label'>Optimized (SQL Unparser output)</div>", unsafe_allow_html=True)
                     st.code(optimized_sql, language="sql")
 
         # ──────────────────────────────────────────────────────────────────
@@ -1101,7 +1099,7 @@ if run_clicked or sql_input:
         with tab6:
             st.markdown(
                 "<div class='tab-section-title'>Internal Debug Information</div>"
-                "<div class='tab-section-desc'>Raw representations for inspection.</div>",
+                "<div class='tab-section-desc'></div>",
                 unsafe_allow_html=True,
             )
             col_d1, col_d2 = st.columns(2)
@@ -1133,7 +1131,7 @@ else:
         "background:var(--bg-secondary);border:1px solid var(--border);"
         "border-radius:6px;color:var(--text-muted);font-size:0.875rem;line-height:1.7'>"
         "Enter an SQL query above and click <strong style='color:var(--text-primary)'>"
-        "⚡ Optimize Query</strong> to start. "
+        "Optimize Query</strong> to start. "
         "Connect a MySQL database in the sidebar for live execution benchmarks."
         "</div>",
         unsafe_allow_html=True,

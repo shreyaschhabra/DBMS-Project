@@ -1,19 +1,4 @@
-"""
-engine/database.py
-------------------
-Live MySQL Database Manager
-
-Handles connecting to a real MySQL server, syncing the live schema into the
-Catalog singleton, and providing a connection handle for the executor.
-
-Design notes
-~~~~~~~~~~~~
-- Uses mysql-connector-python directly (no ORM) — lightweight and fast.
-- The connection is NOT pooled; for a Streamlit demo app one connection is fine.
-- All methods are safe to call even if a connection has not been established yet
-  (they raise a clear RuntimeError instead of letting a NoneType crash propagate).
-- .env credentials are read once at import time as defaults; the UI can override them.
-"""
+""" database.py """
 
 from __future__ import annotations
 
