@@ -11,17 +11,7 @@ from engine.database import DatabaseManager
 
 
 class QueryExecutor:
-    """
-    Executes SQL against a live MySQL connection and returns benchmarking metrics.
-
-    Parameters
-    ----------
-    db_manager : DatabaseManager
-        An already-connected DatabaseManager instance.
-    row_limit : int
-        Safety cap on the number of rows fetched (prevents OOM on huge tables).
-        Defaults to 10,000.  Set to None to fetch all rows (use with caution).
-    """
+    
 
     def __init__(self, db_manager: DatabaseManager, row_limit: int = 10_000) -> None:
         self._db  = db_manager
@@ -39,7 +29,6 @@ class QueryExecutor:
         sql = re.sub(r'\bFULL\s+STRAIGHT_JOIN\b', 'FULL JOIN', sql, flags=re.IGNORECASE)
         sql = re.sub(r'\bCROSS\s+STRAIGHT_JOIN\b', 'CROSS JOIN', sql, flags=re.IGNORECASE)
         
-        # fix flat sql logic (stop deep nest SELECT * FROM)
         while True:
             m = re.match(r"(?i)^\s*SELECT\s+\*\s+FROM\s*\(\s*(.*)\s*\)\s*AS\s+\w+\s*$", sql, re.DOTALL)
             if m:
@@ -47,7 +36,7 @@ class QueryExecutor:
             else:
                 break
                 
-        # clear cache logic
+        # clear cache
         sql = re.sub(r'(?i)^\s*SELECT\b', 'SELECT SQL_NO_CACHE', sql, count=1)
         return sql
 

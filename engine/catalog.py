@@ -6,14 +6,6 @@ from typing import Dict, List
 
 @dataclass
 class TableStats:
-    """
-    Holds statistics for a single table.
-
-    Attributes:
-        name        : The table name.
-        row_count   : Number of rows (cardinality) in the table.
-        columns     : List of column names belonging to the table.
-    """
     name: str
     row_count: int
     columns: List[str] = field(default_factory=list)

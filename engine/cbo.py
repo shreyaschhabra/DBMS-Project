@@ -151,7 +151,7 @@ class CostBasedOptimizer:
         # report the estimated cost of the as-written plan only.
         has_outer = any(t.is_outer for t in table_infos)
         if has_outer:
-            original_cost, breakdown = self._compute_order_cost(table_infos)
+            original_cost, breakdown = self._compute_order_cost(table_infos, join_conditions)
             outer_tables = [t.name for t in table_infos if t.is_outer]
             cost_lines = [
                 "Join Ordering Cost Analysis:",
@@ -195,7 +195,7 @@ class CostBasedOptimizer:
         cost_lines = ["Join Ordering Cost Analysis:", "─" * 48]
 
         for perm in itertools.permutations(table_infos):
-            cost, breakdown = self._compute_order_cost(list(perm))
+            cost, breakdown = self._compute_order_cost(list(perm), join_conditions)
             label = " \u22c8 ".join(t.name for t in perm)
             cost_lines.append(f"  ({label})")
             cost_lines.append(f"    -> cost = {cost:,}  [{breakdown}]")
@@ -386,29 +386,33 @@ class CostBasedOptimizer:
     # ------------------------------------------------------------------
 
     def _compute_order_cost(
-        self, order: List[_TableInfo]
+        self, order: List[_TableInfo], join_conditions: List[str]
     ) -> Tuple[int, str]:
         """
         Compute the total cost of joining tables in *order* left-to-right.
-
-        Cost model:
-            intermediate = cardinality(T1)
-            for each subsequent table Ti:
-                step_cost    = intermediate * cardinality(Ti)
-                total_cost  += step_cost
-                intermediate = step_cost
-
-        Returns (total_cost, breakdown_string).
         """
         intermediate = order[0].cardinality
         total        = 0
         steps        = [str(order[0].cardinality)]
 
+        introduced = [order[0].name]
+        used_conds = set()
+
         for info in order[1:]:
-            step         = intermediate * info.cardinality
-            total       += step
-            intermediate = step
-            steps.append(f"*{info.cardinality}={step:,}")
+            introduced.append(info.name)
+            matched_cond = self._find_condition(introduced, join_conditions, used_conds, strict=True)
+            
+            if matched_cond:
+                used_conds.add(matched_cond)
+                step         = int(intermediate * info.cardinality * 0.1)
+                total       += step
+                intermediate = max(intermediate, info.cardinality)
+                steps.append(f"*{info.cardinality}={step:,}")
+            else:
+                step         = intermediate * info.cardinality
+                total       += step
+                intermediate = step
+                steps.append(f"*(Cross){info.cardinality}={step:,}")
 
         return total, " ".join(steps)
 
@@ -465,6 +469,7 @@ class CostBasedOptimizer:
         tables: List[str],
         conditions: List[str],
         used: set,
+        strict: bool = False,
     ) -> Optional[str]:
         """
         Find a join condition that references at least two of the currently
@@ -487,9 +492,10 @@ class CostBasedOptimizer:
                 return cond
 
         # Fallback: return any unused condition.
-        for cond in conditions:
-            if cond not in used:
-                return cond
+        if not strict:
+            for cond in conditions:
+                if cond not in used:
+                    return cond
 
         return None
 

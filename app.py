@@ -17,9 +17,6 @@ from engine.parser import QueryParser
 from engine.rbo import RuleBasedOptimizer
 from engine.visualizer import PlanVisualizer
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Page configuration (must be first Streamlit call)
-# ─────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(
     page_title="Query Optimizer",
@@ -28,417 +25,624 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CSS  —  dark-mode-first + explicit light-mode overrides
-# ─────────────────────────────────────────────────────────────────────────────
-
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300;1,9..144,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap');
 
-    /* ── Dark mode tokens (default) ──────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       DESIGN TOKENS — Premium Editorial Monochrome
+    ═══════════════════════════════════════════════════════════════ */
     :root {
-        --bg-primary:     #0f1115;
-        --bg-secondary:   #181b22;
-        --bg-card:        #1e2130;
-        --accent:         #4a7cf7;
-        --accent-dark:    #3a6ce0;
-        --accent-amber:   #c9913d;
-        --accent-green:   #3ecf8e;
-        --accent-red:     #f87171;
-        --text-primary:   #e8eaf0;
-        --text-secondary: #9ca3af;
-        --text-muted:     #6b7280;
-        --border:         #2a2f3a;
-        --border-light:   #353b48;
-        --success-bg:     rgba(45, 106, 79, 0.12);
-        --success-border: rgba(82, 183, 136, 0.25);
-        --success-text:   #52b788;
-        --error-bg:       rgba(107, 39, 55, 0.12);
-        --error-border:   rgba(248, 113, 113, 0.25);
-        --error-text:     #f87171;
-        --db-badge-bg:    rgba(62,207,142,0.12);
-        --db-badge-border:rgba(62,207,142,0.30);
-        --db-badge-text:  #3ecf8e;
+        --white:        #ffffff;
+        --off-white:    #f7f7f7;
+        --rule:         #e4e4e4;      /* subtle dividers & borders   */
+        --ink-light:    #888888;      /* muted / secondary text      */
+        --ink:          #1c1c1c;      /* primary body text           */
+        --black:        #000000;      /* headings, CTAs, emphasis    */
+
+        --font-display: 'Fraunces', Georgia, serif;
+        --font-body:    'DM Sans', -apple-system, sans-serif;
+        --font-mono:    'JetBrains Mono', 'Courier New', monospace;
+
+        --r-sm:   2px;
+        --r:      5px;
+        --r-lg:   8px;
+        --ease:   180ms cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* legacy aliases — keeps downstream HTML working */
+        --bg-primary:     var(--white);
+        --bg-secondary:   var(--off-white);
+        --bg-card:        var(--white);
+        --accent:         var(--black);
+        --accent-dark:    #222;
+        --accent-amber:   var(--black);
+        --accent-green:   var(--black);
+        --accent-red:     var(--black);
+        --text-primary:   var(--ink);
+        --text-secondary: var(--ink);
+        --text-muted:     var(--ink-light);
+        --border:         var(--black);
+        --border-light:   var(--rule);
+        --success-text:   var(--black);
+        --error-text:     var(--black);
     }
 
-    /* ── Light mode overrides ─────────────────────────────────────── */
-    @media (prefers-color-scheme: light) {
-        :root {
-            --bg-primary:     #f5f7fa;
-            --bg-secondary:   #ffffff;
-            --bg-card:        #f0f2f5;
-            --text-primary:   #111827;
-            --text-secondary: #374151;
-            --text-muted:     #6b7280;
-            --border:         #d1d5db;
-            --border-light:   #e5e7eb;
-            --success-bg:     rgba(16, 185, 129, 0.08);
-            --success-border: rgba(16, 185, 129, 0.30);
-            --success-text:   #059669;
-            --error-bg:       rgba(239, 68, 68, 0.08);
-            --error-border:   rgba(239, 68, 68, 0.30);
-            --error-text:     #dc2626;
-        }
+    /* ═══════════════════════════════════════════════════════════════
+       FORCE WHITE BACKGROUND EVERYWHERE
+    ═══════════════════════════════════════════════════════════════ */
+    [data-theme="dark"], [data-theme="light"],
+    .stApp, .stApp > *, .main {
+        background-color: var(--white) !important;
+        color: var(--ink) !important;
     }
 
-    /* ── Also handle Streamlit's explicit theme class ─────────────── */
-    [data-theme="light"] {
-        --bg-primary:     #f5f7fa !important;
-        --bg-secondary:   #ffffff !important;
-        --bg-card:        #f0f2f5 !important;
-        --text-primary:   #111827 !important;
-        --text-secondary: #374151 !important;
-        --text-muted:     #4b5563 !important;
-        --border:         #d1d5db !important;
-        --border-light:   #e5e7eb !important;
-        --success-text:   #059669 !important;
-        --error-text:     #dc2626 !important;
-        --accent-amber:   #b45309 !important;
-    }
-
-    /* ── Global ───────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       GLOBAL BASE
+    ═══════════════════════════════════════════════════════════════ */
     html, body, [class*="css"] {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        background-color: var(--bg-primary) !important;
-        color: var(--text-primary) !important;
-        -webkit-font-smoothing: antialiased;
+        font-family: var(--font-body) !important;
+        font-size: 15px !important;
+        line-height: 1.72 !important;
+        background-color: var(--white) !important;
+        color: var(--ink) !important;
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
     }
 
-    /* ── Main container ───────────────────────────────────────────── */
     .main .block-container {
-        padding-top: 2rem;
-        padding-bottom: 4rem;
-        max-width: 1320px;
+        padding-top: 2.5rem !important;
+        padding-bottom: 5rem !important;
+        max-width: 1380px !important;
     }
 
-    /* ── Sidebar ──────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       SIDEBAR
+    ═══════════════════════════════════════════════════════════════ */
     section[data-testid="stSidebar"] {
-        background: var(--bg-secondary) !important;
-        border-right: 1px solid var(--border) !important;
+        background: var(--off-white) !important;
+        border-right: 1px solid var(--rule) !important;
     }
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] span,
     section[data-testid="stSidebar"] div {
-        color: var(--text-primary) !important;
+        color: var(--ink) !important;
     }
     section[data-testid="stSidebar"] hr {
         border: none !important;
-        border-top: 1px solid var(--border) !important;
-        margin: 0.75rem 0 !important;
+        border-top: 1px solid var(--rule) !important;
+        margin: 1rem 0 !important;
     }
 
-    /* ── Text inputs (sidebar credential fields) ─────────────────── */
-    input[type="text"], input[type="password"], input[type="number"] {
-        background: var(--bg-card) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 4px !important;
+    /* ═══════════════════════════════════════════════════════════════
+       TEXT INPUTS
+    ═══════════════════════════════════════════════════════════════ */
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+        font-family: var(--font-body) !important;
+        font-size: 0.875rem !important;
+        background: var(--white) !important;
+        color: var(--ink) !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r) !important;
+        padding: 0.48rem 0.8rem !important;
+        transition: border-color var(--ease) !important;
     }
+    input[type="text"]:hover,
+    input[type="password"]:hover,
+    input[type="number"]:hover { border-color: #bbb !important; }
     input[type="text"]:focus,
     input[type="password"]:focus,
     input[type="number"]:focus {
-        border-color: var(--accent) !important;
+        border-color: var(--black) !important;
         outline: none !important;
         box-shadow: none !important;
     }
 
-    /* ── HR dividers ──────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       HR
+    ═══════════════════════════════════════════════════════════════ */
     hr {
         border: none !important;
-        border-top: 1px solid var(--border) !important;
-        margin: 1.5rem 0 !important;
+        border-top: 1px solid var(--rule) !important;
+        margin: 2rem 0 !important;
     }
 
-    /* ── Buttons ──────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       BUTTONS — clean inversion on hover
+    ═══════════════════════════════════════════════════════════════ */
     .stButton > button {
-        background: var(--accent) !important;
-        color: #ffffff !important;
-        border: none !important;
-        border-radius: 6px !important;
-        padding: 0.55rem 1.75rem !important;
+        font-family: var(--font-body) !important;
+        font-size: 0.78rem !important;
         font-weight: 600 !important;
-        font-size: 0.88rem !important;
-        transition: background 150ms ease, transform 150ms ease !important;
+        letter-spacing: 0.07em !important;
+        text-transform: uppercase !important;
+        background: var(--white) !important;
+        color: var(--black) !important;
+        border: 1.5px solid var(--black) !important;
+        border-radius: var(--r-sm) !important;
+        padding: 0.55rem 1.6rem !important;
+        transition:
+            background var(--ease),
+            color var(--ease),
+            box-shadow var(--ease) !important;
         box-shadow: none !important;
+        cursor: pointer !important;
     }
     .stButton > button:hover {
-        background: var(--accent-dark) !important;
-        transform: scale(1.01) !important;
+        background: var(--black) !important;
+        color: var(--white) !important;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
     }
-    .stButton > button:active { transform: scale(0.99) !important; }
+    .stButton > button:active {
+        opacity: 0.85 !important;
+        box-shadow: none !important;
+    }
 
-    /* ── Textarea ─────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       TEXTAREA
+    ═══════════════════════════════════════════════════════════════ */
     textarea {
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 0.875rem !important;
-        background: var(--bg-secondary) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        color: var(--text-primary) !important;
+        font-family: var(--font-mono) !important;
+        font-size: 0.855rem !important;
+        line-height: 1.75 !important;
+        background: var(--off-white) !important;
+        color: var(--ink) !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r-lg) !important;
+        padding: 0.9rem 1.1rem !important;
+        transition: border-color var(--ease) !important;
     }
-    textarea:focus { border-color: var(--accent) !important; outline: none !important; }
+    textarea:hover { border-color: #bbb !important; }
+    textarea:focus { border-color: var(--black) !important; outline: none !important; }
 
-    /* ── Code blocks ──────────────────────────────────────────────── */
-    .stCodeBlock pre, .stCodeBlock code {
-        font-family: 'JetBrains Mono', monospace !important;
+    /* ═══════════════════════════════════════════════════════════════
+       CODE BLOCKS
+    ═══════════════════════════════════════════════════════════════ */
+    .stCodeBlock,
+    .stCodeBlock pre,
+    .stCodeBlock code {
+        font-family: var(--font-mono) !important;
         font-size: 0.82rem !important;
-        background: var(--bg-secondary) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
-        color: var(--text-primary) !important;
+        line-height: 1.8 !important;
+        background: var(--off-white) !important;
+        color: var(--ink) !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r-lg) !important;
     }
 
-    /* ── Tabs ─────────────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       TABS
+    ═══════════════════════════════════════════════════════════════ */
     .stTabs [data-baseweb="tab-list"] {
         background: transparent !important;
-        border-bottom: 1px solid var(--border) !important;
-        gap: 0 !important; padding: 0 !important;
+        border-bottom: 1px solid var(--rule) !important;
+        gap: 0 !important;
+        padding: 0 !important;
     }
     .stTabs [data-baseweb="tab"] {
+        font-family: var(--font-body) !important;
+        font-size: 0.82rem !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
         background: transparent !important;
         border: none !important;
         border-bottom: 2px solid transparent !important;
         border-radius: 0 !important;
-        padding: 0.6rem 1.2rem !important;
-        font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        color: var(--text-muted) !important;
-        transition: color 150ms ease, border-color 150ms ease !important;
+        padding: 0.7rem 1.3rem !important;
+        color: var(--ink-light) !important;
+        transition: color var(--ease), border-color var(--ease) !important;
         margin-bottom: -1px !important;
     }
-    .stTabs [data-baseweb="tab"]:hover { color: var(--text-primary) !important; }
+    .stTabs [data-baseweb="tab"]:hover { color: var(--ink) !important; }
     .stTabs [aria-selected="true"] {
-        color: var(--text-primary) !important;
-        border-bottom: 2px solid var(--accent) !important;
+        color: var(--black) !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid var(--black) !important;
     }
     .stTabs [data-baseweb="tab-highlight"],
     .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
-    /* ── st.metric — fix light mode value colour ──────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       ST.METRIC
+    ═══════════════════════════════════════════════════════════════ */
     [data-testid="stMetric"] label {
-        color: var(--text-muted) !important;
-        font-size: 0.72rem !important;
+        font-family: var(--font-body) !important;
+        font-size: 0.67rem !important;
         font-weight: 600 !important;
-        letter-spacing: 0.07em !important;
+        letter-spacing: 0.11em !important;
         text-transform: uppercase !important;
+        color: var(--ink-light) !important;
     }
     [data-testid="stMetricValue"] {
-        color: var(--text-primary) !important;
-        font-weight: 700 !important;
+        font-family: var(--font-body) !important;
+        font-size: 1.65rem !important;
+        font-weight: 600 !important;
+        color: var(--ink) !important;
+        line-height: 1.15 !important;
     }
     [data-testid="stMetricDelta"] svg { display: inline !important; }
 
-    /* ── Spinner ──────────────────────────────────────────────────── */
-    .stSpinner > div { color: var(--text-muted) !important; font-size: 0.875rem !important; }
-
-    /* ── Expander ─────────────────────────────────────────────────── */
-    .streamlit-expanderHeader {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
+    /* ═══════════════════════════════════════════════════════════════
+       SPINNER
+    ═══════════════════════════════════════════════════════════════ */
+    .stSpinner > div {
+        font-family: var(--font-body) !important;
+        color: var(--ink-light) !important;
         font-size: 0.875rem !important;
-        font-weight: 500 !important;
-        color: var(--text-secondary) !important;
+        letter-spacing: 0.02em !important;
     }
 
-    /* ── Data editor ──────────────────────────────────────────────── */
+    /* ═══════════════════════════════════════════════════════════════
+       EXPANDER
+    ═══════════════════════════════════════════════════════════════ */
+    .streamlit-expanderHeader {
+        font-family: var(--font-body) !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        color: var(--ink) !important;
+        background: var(--off-white) !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r-lg) !important;
+        transition: border-color var(--ease) !important;
+    }
+    .streamlit-expanderHeader:hover { border-color: #aaa !important; }
+
+    /* ═══════════════════════════════════════════════════════════════
+       DATA EDITOR
+    ═══════════════════════════════════════════════════════════════ */
     [data-testid="stDataEditor"] {
-        border: 1px solid var(--border) !important;
-        border-radius: 6px !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r-lg) !important;
         overflow: hidden;
     }
 
-    /* ══════════════════════ Custom components ═════════════════════ */
+    /* ═══════════════════════════════════════════════════════════════
+       ALERTS
+    ═══════════════════════════════════════════════════════════════ */
+    [data-testid="stAlert"] {
+        font-family: var(--font-body) !important;
+        font-size: 0.875rem !important;
+        border-radius: var(--r-lg) !important;
+        border-width: 1px !important;
+    }
 
-    /* Page header */
+    /* ═══════════════════════════════════════════════════════════════
+       ── PAGE HEADER ──────────────────────────────────────────────
+    ═══════════════════════════════════════════════════════════════ */
     .page-header {
-        padding: 2rem 0 1.5rem;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 2rem;
+        padding: 2.5rem 0 2rem;
+        border-bottom: 1px solid var(--rule);
+        margin-bottom: 2.5rem;
     }
     .page-header-title {
-        font-size: 1.75rem; font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.02em; margin: 0 0 0.4rem; line-height: 1.2;
+        font-family: var(--font-display);
+        font-size: 2.6rem;
+        font-weight: 400;
+        font-style: italic;
+        color: var(--black);
+        letter-spacing: -0.04em;
+        margin: 0 0 0.65rem;
+        line-height: 1.08;
     }
     .page-header-desc {
-        font-size: 0.9rem; color: var(--text-muted);
-        font-weight: 400; margin: 0; line-height: 1.6; max-width: 720px;
+        font-family: var(--font-body);
+        font-size: 0.93rem;
+        color: var(--ink-light);
+        font-weight: 400;
+        margin: 0;
+        line-height: 1.78;
+        max-width: 700px;
     }
-    .page-header-tags { margin-top: 1rem; display: flex; gap: 0.45rem; flex-wrap: wrap; }
+    .page-header-tags {
+        margin-top: 1.35rem;
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
 
-    /* Tags */
+    /* ── TAGS ────────────────────────────────────────────────────── */
     .tag {
-        display: inline-block; padding: 0.2rem 0.65rem; border-radius: 4px;
-        font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+        display: inline-block;
+        padding: 0.22rem 0.72rem;
+        font-family: var(--font-body);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        background: var(--bg-card); color: var(--text-muted); border: 1px solid var(--border);
+        background: var(--white);
+        color: var(--ink-light);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-sm);
+        transition: border-color var(--ease), color var(--ease);
     }
-    .tag-accent {
-        background: rgba(74,124,247,0.1); color: var(--accent);
-        border-color: rgba(74,124,247,0.25);
-    }
-    .tag-green {
-        background: rgba(62,207,142,0.1); color: var(--accent-green);
-        border-color: rgba(62,207,142,0.25);
-    }
-    .tag-red {
-        background: rgba(248,113,113,0.1); color: var(--accent-red);
-        border-color: rgba(248,113,113,0.25);
-    }
+    .tag-accent { color: var(--black); border-color: #bbb; }
+    .tag-green  { color: var(--black); border-color: #bbb; }
+    .tag-red    { color: var(--ink-light); }
 
-    /* Section labels */
+    /* ── SECTION LABELS ──────────────────────────────────────────── */
     .section-label {
-        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
-        text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;
+        font-family: var(--font-body);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--ink-light);
+        margin-bottom: 0.65rem;
     }
 
-    /* Input hints */
+    /* ── INPUT HINT ──────────────────────────────────────────────── */
     .input-hint {
-        font-size: 0.8rem; color: var(--text-muted);
-        font-weight: 400; padding-top: 0.5rem; line-height: 1.5;
+        font-family: var(--font-body);
+        font-size: 0.845rem;
+        color: var(--ink-light);
+        font-weight: 400;
+        padding-top: 0.5rem;
+        line-height: 1.65;
     }
 
-    /* Metric cards */
+    /* ── METRIC CARDS ────────────────────────────────────────────── */
     .metric-card {
-        padding: 1.1rem 1rem;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border);
-        border-radius: 6px;
+        padding: 1.3rem 1.15rem;
+        background: var(--white);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-lg);
+        transition: border-color var(--ease), box-shadow var(--ease);
+    }
+    .metric-card:hover {
+        border-color: #bbb;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.07);
     }
     .metric-card-value {
-        font-size: 1.75rem; font-weight: 700;
-        color: var(--text-primary); line-height: 1; margin-bottom: 0.4rem;
+        font-family: var(--font-display);
+        font-size: 2.1rem;
+        font-weight: 400;
+        color: var(--black);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
     }
-    .metric-card-value.accent  { color: var(--accent); }
-    .metric-card-value.amber   { color: var(--accent-amber); }
-    .metric-card-value.success { color: var(--success-text); }
-    .metric-card-value.green   { color: var(--accent-green); }
-    .metric-card-value.sm      { font-size: 1rem; }
+    .metric-card-value.accent,
+    .metric-card-value.amber,
+    .metric-card-value.success,
+    .metric-card-value.green { color: var(--black); }
+    .metric-card-value.sm {
+        font-family: var(--font-body);
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0;
+    }
     .metric-card-label {
-        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
-        text-transform: uppercase; color: var(--text-muted);
+        font-family: var(--font-body);
+        font-size: 0.66rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ink-light);
     }
 
-    /* Tree output */
+    /* ── TREE CONTAINER ──────────────────────────────────────────── */
     .tree-container {
-        font-family: 'JetBrains Mono', monospace !important;
-        font-size: 0.82rem !important; line-height: 1.65 !important;
-        background: #0a0c10 !important; color: #c9d1d9 !important;
-        padding: 1.25rem 1.5rem !important;
-        border: 1px solid var(--border) !important; border-radius: 6px !important;
-        white-space: pre !important; overflow-x: auto !important;
-        margin-bottom: 1rem !important;
+        font-family: var(--font-mono) !important;
+        font-size: 0.82rem !important;
+        line-height: 1.8 !important;
+        background: var(--off-white) !important;
+        color: var(--ink) !important;
+        padding: 1.5rem 1.7rem !important;
+        border: 1px solid var(--rule) !important;
+        border-radius: var(--r-lg) !important;
+        white-space: pre !important;
+        overflow-x: auto !important;
+        margin-bottom: 1.25rem !important;
     }
 
-    /* SQL Unparser badge */
-    .sql-unparser-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    /* ── SQL UNPARSER ────────────────────────────────────────────── */
+    .sql-unparser-header {
+        display: flex; align-items: center; gap: 0.65rem;
+        margin-bottom: 0.65rem; margin-top: 1.75rem;
+    }
     .sql-unparser-badge {
-        display: inline-block; padding: 0.15rem 0.55rem; border-radius: 4px;
-        font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-        background: rgba(62,207,142,0.1); color: var(--accent-green);
-        border: 1px solid rgba(62,207,142,0.25);
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        font-family: var(--font-body);
+        font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        background: var(--black); color: var(--white);
+        border-radius: var(--r-sm);
     }
 
-    /* DB connection section */
-    .db-section-title {
-        font-size: 0.78rem; font-weight: 600; color: var(--text-primary);
-        margin: 0.75rem 0 0.4rem;
-    }
+    /* ── DB CONNECTED BADGE ──────────────────────────────────────── */
     .db-connected-badge {
-        display: inline-flex; align-items: center; gap: 0.35rem;
-        padding: 0.2rem 0.6rem; border-radius: 4px;
-        background: var(--db-badge-bg, rgba(62,207,142,0.12));
-        border: 1px solid var(--db-badge-border, rgba(62,207,142,0.3));
-        color: var(--db-badge-text, #3ecf8e);
-        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 0.45rem;
+        padding: 0.28rem 0.75rem;
+        background: var(--off-white);
+        border: 1px solid var(--rule);
+        border-radius: var(--r);
+        font-family: var(--font-body);
+        font-size: 0.7rem; font-weight: 600;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: var(--ink);
+    }
+    .db-connected-badge::before {
+        content: '';
+        display: inline-block;
+        width: 7px; height: 7px;
+        background: #1a1a1a;
+        border-radius: 50%;
     }
 
-    /* Live metrics tab */
-    .metrics-compare-header {
-        display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem;
-    }
+    /* ── METRICS TAB ─────────────────────────────────────────────── */
+    .metrics-compare-header { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1rem; }
     .metrics-badge {
-        display: inline-block; padding: 0.18rem 0.6rem; border-radius: 4px;
-        font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-        background: rgba(74,124,247,0.1); color: var(--accent);
-        border: 1px solid rgba(74,124,247,0.25);
+        display: inline-block;
+        padding: 0.2rem 0.65rem;
+        font-family: var(--font-body);
+        font-size: 0.62rem; font-weight: 700;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        background: var(--black); color: var(--white);
+        border-radius: var(--r-sm);
     }
     .metrics-col-header {
-        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
-        padding: 0.5rem 0.75rem; border-radius: 4px; text-align: center; margin-bottom: 0.75rem;
+        font-family: var(--font-body);
+        font-size: 0.69rem; font-weight: 600;
+        letter-spacing: 0.09em; text-transform: uppercase;
+        padding: 0.55rem 0.9rem;
+        text-align: center; margin-bottom: 0.75rem;
+        border: 1px solid var(--rule);
+        border-radius: var(--r);
+        color: var(--ink);
+        background: var(--off-white);
     }
-    .metrics-col-header.unopt { background: rgba(248,113,113,0.08); color: var(--accent-red); border: 1px solid rgba(248,113,113,0.2); }
-    .metrics-col-header.opt   { background: rgba(62,207,142,0.08);  color: var(--accent-green); border: 1px solid rgba(62,207,142,0.2); }
+    .metrics-col-header.opt { border-color: #aaa; background: var(--white); }
 
-    /* Catalog entries */
+    /* ── CATALOG ENTRIES ─────────────────────────────────────────── */
     .catalog-entry {
-        background: var(--bg-primary); border: 1px solid var(--border);
-        border-radius: 6px; padding: 0.6rem 0.85rem; margin-bottom: 0.45rem;
+        background: var(--white);
+        border: 1px solid var(--rule);
+        border-radius: var(--r-lg);
+        padding: 0.7rem 0.95rem;
+        margin-bottom: 0.42rem;
+        transition: border-color var(--ease), box-shadow var(--ease);
     }
-    .catalog-entry .ce-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.1rem; }
-    .catalog-entry .ce-rows { font-size: 0.74rem; font-weight: 500; color: var(--accent); margin-bottom: 0.08rem; }
-    .catalog-entry .ce-cols { font-size: 0.68rem; color: var(--text-muted); }
+    .catalog-entry:hover {
+        border-color: #bbb;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    .catalog-entry .ce-name {
+        font-family: var(--font-body);
+        font-size: 0.83rem; font-weight: 600;
+        color: var(--ink); margin-bottom: 0.12rem;
+    }
+    .catalog-entry .ce-rows {
+        font-family: var(--font-mono);
+        font-size: 0.72rem; font-weight: 500;
+        color: var(--black); margin-bottom: 0.08rem;
+    }
+    .catalog-entry .ce-cols {
+        font-family: var(--font-body);
+        font-size: 0.69rem;
+        color: var(--ink-light); line-height: 1.5;
+    }
 
-    /* Schema info box */
+    /* ── SCHEMA INFO BOX ─────────────────────────────────────────── */
     .schema-info {
-        background: rgba(74,124,247,0.06); border: 1px solid rgba(74,124,247,0.18);
-        border-radius: 6px; padding: 0.85rem 1rem; margin-bottom: 1rem;
-        font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6;
+        background: var(--off-white);
+        border: 1px solid var(--rule);
+        border-left: 3px solid var(--black);
+        border-radius: var(--r-lg);
+        padding: 0.95rem 1.15rem;
+        margin-bottom: 1.25rem;
+        font-family: var(--font-body);
+        font-size: 0.875rem; color: var(--ink); line-height: 1.75;
+    }
+    .schema-info code {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        background: var(--white);
+        border: 1px solid var(--rule);
+        padding: 0.08em 0.45em;
+        border-radius: var(--r-sm);
     }
 
-    /* Pipeline steps */
+    /* ── PIPELINE STEPS ──────────────────────────────────────────── */
     .pipeline-step {
-        display: flex; align-items: flex-start; gap: 0.6rem;
-        padding: 0.4rem 0; border-bottom: 1px solid var(--border); font-size: 0.8rem;
+        display: flex; align-items: flex-start; gap: 0.7rem;
+        padding: 0.48rem 0;
+        border-bottom: 1px solid var(--rule);
+        transition: background var(--ease);
     }
     .pipeline-step:last-child { border-bottom: none; }
     .pipeline-step .step-num {
-        font-size: 0.64rem; font-weight: 700; color: var(--text-muted);
-        min-width: 1.4rem; padding-top: 0.1rem; letter-spacing: 0.04em;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--font-mono);
+        font-size: 0.61rem; font-weight: 700;
+        color: var(--ink-light);
+        min-width: 1.7rem; padding-top: 0.15rem;
+        letter-spacing: 0.04em;
     }
-    .pipeline-step .step-body .step-title { font-weight: 600; color: var(--text-primary); line-height: 1.3; }
-    .pipeline-step .step-body .step-desc  { color: var(--text-muted); font-size: 0.74rem; line-height: 1.4; margin-top: 0.06rem; }
+    .pipeline-step .step-body .step-title {
+        font-family: var(--font-body);
+        font-weight: 600; color: var(--ink);
+        line-height: 1.35; font-size: 0.83rem;
+    }
+    .pipeline-step .step-body .step-desc {
+        font-family: var(--font-body);
+        color: var(--ink-light); font-size: 0.74rem;
+        line-height: 1.5; margin-top: 0.06rem;
+    }
 
-    /* App name */
-    .sidebar-app-name { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
-    .sidebar-app-version { font-size: 0.73rem; color: var(--text-muted); margin-top: 0.1rem; }
+    /* ── SIDEBAR APP NAME ────────────────────────────────────────── */
+    .sidebar-app-name {
+        font-family: var(--font-display);
+        font-size: 1.2rem; font-weight: 400; font-style: italic;
+        color: var(--black); letter-spacing: -0.02em;
+    }
+    .sidebar-app-version {
+        font-family: var(--font-body);
+        font-size: 0.72rem; color: var(--ink-light);
+        margin-top: 0.1rem; letter-spacing: 0.03em;
+    }
 
-    /* Tab section typography */
+    /* ── TAB SECTION TYPOGRAPHY ──────────────────────────────────── */
     .tab-section-title {
-        font-size: 0.95rem; font-weight: 600; color: var(--text-primary);
-        margin-bottom: 0.3rem; margin-top: 1.25rem;
+        font-family: var(--font-body);
+        font-size: 1rem; font-weight: 600;
+        color: var(--black);
+        margin-bottom: 0.35rem; margin-top: 1.5rem;
+        letter-spacing: -0.01em;
     }
     .tab-section-desc {
-        font-size: 0.83rem; color: var(--text-muted); font-weight: 400;
-        margin-bottom: 0.75rem; line-height: 1.6; max-width: 680px;
+        font-family: var(--font-body);
+        font-size: 0.875rem; color: var(--ink-light);
+        font-weight: 400; margin-bottom: 1rem;
+        line-height: 1.75; max-width: 700px;
     }
     .tab-section-desc code {
-        font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-        background: var(--bg-card); padding: 0.1em 0.4em; border-radius: 3px; color: var(--accent);
+        font-family: var(--font-mono); font-size: 0.8rem;
+        background: var(--off-white);
+        border: 1px solid var(--rule);
+        padding: 0.1em 0.45em;
+        border-radius: var(--r-sm); color: var(--ink);
     }
 
-    /* Compare label */
+    /* ── COMPARE LABEL ───────────────────────────────────────────── */
     .compare-label {
-        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.09em; color: var(--text-muted);
-        margin-bottom: 0.5rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--border);
+        font-family: var(--font-body);
+        font-size: 0.66rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.11em;
+        color: var(--ink-light);
+        margin-bottom: 0.55rem; padding-bottom: 0.42rem;
+        border-bottom: 1px solid var(--rule);
     }
 
-    /* Error state for cost query card */
-    .cost-error { color: var(--text-muted); font-style: italic; font-size: 0.8rem; }
+    /* ── COST ERROR ──────────────────────────────────────────────── */
+    .cost-error {
+        font-family: var(--font-body);
+        color: var(--ink-light); font-style: italic; font-size: 0.83rem;
+    }
+
+    /* ── DB SECTION TITLE (legacy) ────────────────────────────────── */
+    .db-section-title {
+        font-family: var(--font-body);
+        font-size: 0.8rem; font-weight: 600; color: var(--ink);
+        margin: 0.75rem 0 0.4rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+        .page-header-title { font-size: 2rem; }
+        .page-header-desc  { font-size: 0.875rem; }
+        .metric-card { min-width: 100%; margin-bottom: 0.5rem; }
+        .metrics-compare-header { flex-direction: column; align-items: flex-start; }
+    }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Session-state singletons
-# ─────────────────────────────────────────────────────────────────────────────
 
 if "catalog" not in st.session_state:
     st.session_state["catalog"] = Catalog()
@@ -460,9 +664,7 @@ def get_visualizer() -> PlanVisualizer:
 parser = get_parser()
 vis    = get_visualizer()
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Default SQL — Olist e-commerce database
-# ─────────────────────────────────────────────────────────────────────────────
+# Default db
 
 DEFAULT_SQL = """\
 SELECT
@@ -476,9 +678,6 @@ JOIN olist_order_payments_dataset
     ON olist_orders_dataset.order_id = olist_order_payments_dataset.order_id
 WHERE olist_orders_dataset.order_status = 'delivered'"""
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SIDEBAR
-# ─────────────────────────────────────────────────────────────────────────────
 
 with st.sidebar:
     st.markdown(
@@ -490,7 +689,7 @@ with st.sidebar:
     )
     st.markdown("---")
 
-    # ── Live DB Connection ─────────────────────────────────────────────
+    # Live DB Connection
     st.markdown("<div class='section-label'>Live DB Connection</div>", unsafe_allow_html=True)
 
     if db_manager and db_manager.is_connected:
@@ -507,7 +706,6 @@ with st.sidebar:
         host_header = st.context.headers.get("host", "")
         is_local = host_header.startswith("localhost") or host_header.startswith("127.0.0.1")
 
-        # Credential inputs — pre-filled from .env defaults
         import os
         try:
             from dotenv import load_dotenv
@@ -522,14 +720,14 @@ with st.sidebar:
             def_pass = os.getenv("DB_PASSWORD", "")
             def_name = os.getenv("DB_NAME", "")
         else:
-            # For network users, keep it blank/generic
+            # For network users
             def_host = "localhost"
             def_port = 3306
             def_user = ""
             def_pass = ""
             def_name = ""
 
-        # 3. Use the determined default values in the UI
+        
         db_host = st.text_input("Host",     value=def_host, key="db_host")
         db_port = st.number_input("Port",   value=def_port, min_value=1, max_value=65535, key="db_port")
         db_user = st.text_input("User",     value=def_user, key="db_user")
@@ -557,16 +755,16 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # ── Catalog viewer ───────────────────────────────────────────────────
+    # Catalog viewer
     st.markdown("<div class='section-label'>Database Catalog</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p style='color:var(--text-muted);font-size:0.78rem;margin-bottom:0.6rem;line-height:1.5'>"
+        "<p style='color:var(--ink-light);font-size:0.78rem;margin-bottom:0.7rem;line-height:1.6'>"
         "Live statistics used by the CBO. Edit in the Schema tab.</p>",
         unsafe_allow_html=True,
     )
 
     all_stats = catalog.get_all_stats()
-    # Show at most 8 entries to keep sidebar compact; full list in Schema tab
+    
     shown = list(all_stats.items())[:8]
     for table_name, info in shown:
         cols_str = ", ".join(info["columns"][:5])
@@ -584,14 +782,13 @@ with st.sidebar:
         )
     if len(all_stats) > 8:
         st.markdown(
-            f"<p style='font-size:0.72rem;color:var(--text-muted);margin:0.3rem 0 0.6rem'>"
+            f"<p style='font-size:0.72rem;color:var(--ink-light);margin:0.3rem 0 0.6rem'>"
             f"+ {len(all_stats)-8} more tables — see Schema tab</p>",
             unsafe_allow_html=True,
         )
 
     st.markdown("---")
 
-    # ── Pipeline stages ──────────────────────────────────────────────────
     st.markdown("<div class='section-label'>Pipeline Stages</div>", unsafe_allow_html=True)
     pipeline_steps = [
         ("01", "SQL Parsing",               "sqlglot AST-based parser"),
@@ -615,11 +812,8 @@ with st.sidebar:
         </div>"""
     st.markdown(steps_html, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MAIN AREA — Header
-# ─────────────────────────────────────────────────────────────────────────────
 
-db_manager = st.session_state.get("db_manager")   # refresh after sidebar rerun
+db_manager = st.session_state.get("db_manager")  
 catalog    = st.session_state["catalog"]
 
 live_db = db_manager is not None and db_manager.is_connected
@@ -650,11 +844,11 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── SQL input ────────────────────────────────────────────────────────────────
+# ── SQL input
 
 st.markdown("<div class='section-label'>SQL Query</div>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:var(--text-muted);font-size:0.82rem;margin-bottom:0.5rem;line-height:1.5'>"
+    "<p style='color:var(--ink-light);font-size:0.855rem;margin-bottom:0.55rem;line-height:1.7'>"
     "Enter a SELECT with JOINs and WHERE clauses. Supports INNER/LEFT/RIGHT JOINs, "
     "AND/OR predicates, CTEs, and GROUP BY.</p>",
     unsafe_allow_html=True,
@@ -676,9 +870,8 @@ with col_hint:
            "Connect a MySQL database in the sidebar to enable live benchmarking."
     st.markdown(f"<p class='input-hint'>{hint}</p>", unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────────────────────────────────────
 # PIPELINE EXECUTION
-# ─────────────────────────────────────────────────────────────────────────────
+
 
 if run_clicked or sql_input:
     st.markdown("---")
@@ -817,9 +1010,10 @@ if run_clicked or sql_input:
                 with st.expander(f"Predicate Rules Fired ({len(predicate_rules)})"):
                     for i, r in enumerate(predicate_rules, 1):
                         st.markdown(
-                            f"<div style='font-size:0.82rem;padding:0.3rem 0;"
-                            f"border-bottom:1px solid var(--border);color:var(--text-secondary)'>"
-                            f"<strong style='color:var(--accent);margin-right:0.5rem'>{i}.</strong>{r}</div>",
+                            f"<div style='font-family:var(--font-body);font-size:0.855rem;"
+                            f"padding:0.35rem 0;border-bottom:1px solid var(--rule);"
+                            f"color:var(--ink)'>"
+                            f"<strong style='color:var(--black);margin-right:0.5rem'>{i}.</strong>{r}</div>",
                             unsafe_allow_html=True,
                         )
 
@@ -835,9 +1029,10 @@ if run_clicked or sql_input:
                 with st.expander(f"Projection Rules Fired ({len(projection_rules)})"):
                     for i, r in enumerate(projection_rules, 1):
                         st.markdown(
-                            f"<div style='font-size:0.82rem;padding:0.3rem 0;"
-                            f"border-bottom:1px solid var(--border);color:var(--text-secondary)'>"
-                            f"<strong style='color:var(--accent);margin-right:0.5rem'>{i}.</strong>{r}</div>",
+                            f"<div style='font-family:var(--font-body);font-size:0.855rem;"
+                            f"padding:0.35rem 0;border-bottom:1px solid var(--rule);"
+                            f"color:var(--ink)'>"
+                            f"<strong style='color:var(--black);margin-right:0.5rem'>{i}.</strong>{r}</div>",
                             unsafe_allow_html=True,
                         )
 
@@ -939,7 +1134,8 @@ if run_clicked or sql_input:
                                 st.error(str(e))
                 else:
                     st.markdown(
-                        "<p style='font-size:0.78rem;color:var(--text-muted);padding-top:0.5rem'>"
+                        "<p style='font-family:var(--font-body);font-size:0.8rem;"
+                        "color:var(--ink-light);padding-top:0.55rem'>"
                         "Connect a DB to enable sync.</p>",
                         unsafe_allow_html=True,
                     )
@@ -954,12 +1150,15 @@ if run_clicked or sql_input:
         with tab5:
             if not live_db:
                 st.markdown(
-                    "<div style='margin-top:1.5rem;padding:1.5rem;background:var(--bg-secondary);"
-                    "border:1px solid var(--border);border-radius:8px;text-align:center'>"
-                    "<div style='font-size:1.5rem;margin-bottom:0.5rem'></div>"
-                    "<div style='font-weight:600;color:var(--text-primary);margin-bottom:0.3rem'>"
+                    "<div style='margin-top:1.5rem;padding:2rem 1.75rem;"
+                    "background:var(--off-white);border:1px solid var(--rule);"
+                    "border-radius:var(--r-lg);text-align:center'>"
+                    "<div style='font-size:1.5rem;margin-bottom:0.6rem'>⌀</div>"
+                    "<div style='font-family:var(--font-body);font-weight:600;"
+                    "color:var(--ink);margin-bottom:0.35rem;font-size:0.95rem'>"
                     "No Live Database Connected</div>"
-                    "<div style='font-size:0.85rem;color:var(--text-muted)'>"
+                    "<div style='font-family:var(--font-body);font-size:0.875rem;"
+                    "color:var(--ink-light);line-height:1.7'>"
                     "Enter MySQL credentials in the sidebar and click "
                     "<strong>Connect & Sync Catalog</strong> to enable query benchmarking.</div>"
                     "</div>",
@@ -970,7 +1169,7 @@ if run_clicked or sql_input:
                     "<div class='metrics-compare-header'>"
                     "<div class='tab-section-title' style='margin:0'>Live Execution Metrics</div>"
                     "<span class='metrics-badge'>MySQL Benchmarks</span></div>"
-                    "<div class='tab-section-desc'></div>"
+                    "<div class='tab-section-desc'>"
                     "<strong>Rows Returned</strong> should match — proving semantic correctness. "
                     "<strong>Time</strong> and <strong>MySQL Cost</strong> should be lower for "
                     "the optimized plan (delta shown in green = improvement)."
@@ -1005,9 +1204,10 @@ if run_clicked or sql_input:
                 row_label, mc1, mc2 = st.columns([0.8, 2, 2])
                 with row_label:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:var(--text-muted);"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
-                        "⏱ Exec Time</div>",
+                        "<div style='font-family:var(--font-body);font-size:0.72rem;"
+                        "font-weight:600;color:var(--ink-light);"
+                        "text-transform:uppercase;letter-spacing:0.09em;padding-top:1.2rem'>"
+                        "Exec Time</div>",
                         unsafe_allow_html=True,
                     )
                 with mc1:
@@ -1023,7 +1223,7 @@ if run_clicked or sql_input:
                         label="Optimized — Execution Time",
                         value=f"{t_opt:.1f} ms",
                         delta=delta_t_str,
-                        delta_color="inverse",   # negative delta = improvement = green
+                        delta_color="inverse",
                         label_visibility="collapsed",
                     )
 
@@ -1031,8 +1231,9 @@ if run_clicked or sql_input:
                 row_label2, mc3, mc4 = st.columns([0.8, 2, 2])
                 with row_label2:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:var(--text-muted);"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
+                        "<div style='font-family:var(--font-body);font-size:0.72rem;"
+                        "font-weight:600;color:var(--ink-light);"
+                        "text-transform:uppercase;letter-spacing:0.09em;padding-top:1.2rem'>"
                         "Rows</div>",
                         unsafe_allow_html=True,
                     )
@@ -1056,8 +1257,9 @@ if run_clicked or sql_input:
                 row_label3, mc5, mc6 = st.columns([0.8, 2, 2])
                 with row_label3:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:var(--text-muted);"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
+                        "<div style='font-family:var(--font-body);font-size:0.72rem;"
+                        "font-weight:600;color:var(--ink-light);"
+                        "text-transform:uppercase;letter-spacing:0.09em;padding-top:1.2rem'>"
                         "MySQL Cost</div>",
                         unsafe_allow_html=True,
                     )
@@ -1127,10 +1329,11 @@ if run_clicked or sql_input:
 
 else:
     st.markdown(
-        "<div style='margin-top:2rem;padding:1.25rem 1.5rem;"
-        "background:var(--bg-secondary);border:1px solid var(--border);"
-        "border-radius:6px;color:var(--text-muted);font-size:0.875rem;line-height:1.7'>"
-        "Enter an SQL query above and click <strong style='color:var(--text-primary)'>"
+        "<div style='margin-top:2rem;padding:1.4rem 1.6rem;"
+        "background:var(--off-white);border:1px solid var(--rule);"
+        "border-radius:var(--r-lg);font-family:var(--font-body);"
+        "color:var(--ink-light);font-size:0.885rem;line-height:1.75'>"
+        "Enter an SQL query above and click <strong style='color:var(--black)'>"
         "Optimize Query</strong> to start. "
         "Connect a MySQL database in the sidebar for live execution benchmarks."
         "</div>",

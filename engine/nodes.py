@@ -40,7 +40,7 @@ class _JoinPlan(NamedTuple):
     cols:        str                # SELECT list ("*" or "a, b, c")
 
 
-def _try_collect_join(node: "PlanNode", cols: str = "*") -> Optional[_JoinPlan]:
+def _try_collect_join(node: "PlanNode", cols: str = "*", ctr: Optional[List[int]] = None) -> Optional[_JoinPlan]:
     """
     Recursively walk a subtree and collect its join spine into a ``_JoinPlan``.
 
@@ -53,15 +53,40 @@ def _try_collect_join(node: "PlanNode", cols: str = "*") -> Optional[_JoinPlan]:
       * ProjectNode  → (recursive)   [cols are overridden by the outermost Project]
       * JoinNode     → left + right  (recursively)
     """
-    return _collect(node, cols, [])
+    return _collect(node, cols, [], False, ctr)
 
 
 def _collect(
     node: "PlanNode",
     cols: str,
     preds: List[str],
+    in_join: bool = False,
+    ctr: Optional[List[int]] = None,
 ) -> Optional[_JoinPlan]:
     """Internal recursive collector."""
+
+    if in_join and not isinstance(node, JoinNode):
+        if isinstance(node, ScanNode):
+            alias = node.alias or node.table_name
+            entry = _JoinEntry(table=node.table_name, alias=alias,
+                               join_type="INNER", condition="")
+            return _JoinPlan(tables=[entry], predicates=list(preds), cols=cols)
+
+        flat = _try_flatten(node)
+        if flat is not None:
+            inner_flat = _Flat(table=flat.table, alias=flat.table, cols=flat.cols, where=flat.where)
+            inner_sql = _flat_to_sql(inner_flat)
+            indented = _indent_block(inner_sql)
+            subq_str = f"(\n{indented}\n)"
+            entry = _JoinEntry(table=subq_str, alias=flat.alias, join_type="INNER", condition="")
+            return _JoinPlan(tables=[entry], predicates=list(preds), cols=cols)
+        else:
+            if ctr is None:
+                ctr = [0]
+            inner_sql = node.to_sql(ctr)
+            subq_str, subq_alias = _wrap(inner_sql, ctr)
+            entry = _JoinEntry(table=subq_str, alias=subq_alias, join_type="INNER", condition="")
+            return _JoinPlan(tables=[entry], predicates=list(preds), cols=cols)
 
     if isinstance(node, ScanNode):
         alias = node.alias or node.table_name
@@ -72,7 +97,7 @@ def _collect(
     if isinstance(node, SelectNode):
         # Accumulate predicate, recurse into child
         new_preds = list(preds) + [node.predicate]
-        return _collect(node.child, cols, new_preds)
+        return _collect(node.child, cols, new_preds, in_join, ctr)
 
     if isinstance(node, ProjectNode):
         # Only override cols if the outer caller hasn't specified one yet.
@@ -80,12 +105,12 @@ def _collect(
         # are irrelevant to the final SELECT list (they just narrow scans).
         node_cols = ", ".join(node.columns) if node.columns else "*"
         effective_cols = node_cols if (cols == "*" and node_cols != "*") else cols
-        return _collect(node.child, effective_cols, preds)
+        return _collect(node.child, effective_cols, preds, in_join, ctr)
 
     if isinstance(node, JoinNode):
         # Collect left and right arms independently
-        left_plan  = _collect(node.left,  cols, preds)
-        right_plan = _collect(node.right, cols, [])
+        left_plan  = _collect(node.left,  cols, preds, True, ctr)
+        right_plan = _collect(node.right, cols, [],    True, ctr)
         if left_plan is None or right_plan is None:
             return None
 
@@ -336,7 +361,7 @@ class SelectNode(PlanNode):
             ctr = [0]
 
         # Try full join-spine flatten first
-        plan = _try_collect_join(self)
+        plan = _try_collect_join(self, ctr=ctr)
         if plan is not None:
             return _render_join_plan(plan)
 
@@ -390,7 +415,7 @@ class ProjectNode(PlanNode):
         cols = ", ".join(self.columns) if self.columns else "*"
 
         # Try full join-spine flatten (Project sits above a join tree)
-        plan = _try_collect_join(self)
+        plan = _try_collect_join(self, ctr=ctr)
         if plan is not None:
             return _render_join_plan(plan)
 
@@ -478,7 +503,7 @@ class JoinNode(PlanNode):
             ctr = [0]
 
         # Try flatten the whole join spine
-        plan = _try_collect_join(self)
+        plan = _try_collect_join(self, ctr=ctr)
         if plan is not None:
             return _render_join_plan(plan)
 
@@ -546,7 +571,7 @@ class AggregateNode(PlanNode):
         gb_str       = ", ".join(self.group_by_cols) if self.group_by_cols else ""
 
         # Try to flatten child into a single FROM block
-        plan = _try_collect_join(self.child)
+        plan = _try_collect_join(self.child, ctr=ctr)
         if plan is not None:
             # Reuse join tables/predicates; override SELECT list
             lines_from_join = _render_join_plan(
@@ -615,7 +640,7 @@ class SubqueryNode(PlanNode):
             ctr = [0]
 
         # Flatten inner child if possible
-        plan = _try_collect_join(self.child)
+        plan = _try_collect_join(self.child, ctr=ctr)
         if plan is not None:
             inner_sql = _render_join_plan(plan)
         else:
