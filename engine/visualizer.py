@@ -137,9 +137,7 @@ class PlanVisualizer:
         elif isinstance(node, JoinNode):
             # Capitalise so it reads: InnerJoin, LeftJoin, RightJoin, etc.
             label = f"{node.join_type.capitalize()}Join"
-            lines.append(
-                f"{prefix}{connector}{label} [ ON {node.condition} ]"
-            )
+            lines.append(f"{prefix}{connector}{label} [ ON {node.condition} ]")
             # Left child is NOT last (right comes after).
             self._render_node(node.left,  child_prefix, is_last=False, lines=lines)
             # Right child IS last.
@@ -150,9 +148,7 @@ class PlanVisualizer:
             gb_str  = ", ".join(node.group_by_cols) if node.group_by_cols else "(none)"
             agg_str = ", ".join(node.aggregates)     if node.aggregates    else "(none)"
             having_part = f" | HAVING {node.having}" if node.having else ""
-            lines.append(
-                f"{prefix}{connector}Aggregate [ GROUP BY {gb_str} | {agg_str}{having_part} ]"
-            )
+            lines.append(f"{prefix}{connector}Aggregate [ GROUP BY {gb_str} | {agg_str}{having_part} ]")
             self._render_node(node.child, child_prefix, is_last=True, lines=lines)
 
         # ── Subquery (CTE / inline subquery) ──────────────────────────

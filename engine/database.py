@@ -1,20 +1,3 @@
-"""
-engine/database.py
-------------------
-Live MySQL Database Manager
-
-Handles connecting to a real MySQL server, syncing the live schema into the
-Catalog singleton, and providing a connection handle for the executor.
-
-Design notes
-~~~~~~~~~~~~
-- Uses mysql-connector-python directly (no ORM) — lightweight and fast.
-- The connection is NOT pooled; for a Streamlit demo app one connection is fine.
-- All methods are safe to call even if a connection has not been established yet
-  (they raise a clear RuntimeError instead of letting a NoneType crash propagate).
-- .env credentials are read once at import time as defaults; the UI can override them.
-"""
-
 from __future__ import annotations
 
 import json
@@ -37,18 +20,6 @@ except ImportError:
 
 
 class DatabaseManager:
-    """
-    Manages a single MySQL connection and exposes schema-sync + query helpers.
-
-    Usage::
-
-        mgr = DatabaseManager(host="localhost", port=3306,
-                              user="root", password="secret", database="olist_db")
-        mgr.connect()              # raises on failure
-        catalog = mgr.sync_schema_to_catalog(catalog)
-        mgr.disconnect()
-    """
-
     def __init__(
         self,
         host: str     = os.getenv("DB_HOST", "localhost"),
@@ -70,10 +41,6 @@ class DatabaseManager:
     # ------------------------------------------------------------------
 
     def connect(self) -> None:
-        """
-        Open a connection to MySQL.  Raises ``RuntimeError`` on failure with a
-        human-readable message suitable for ``st.error()``.
-        """
         if not MYSQL_AVAILABLE:
             raise RuntimeError(
                 "mysql-connector-python is not installed. "
@@ -115,20 +82,6 @@ class DatabaseManager:
     # ------------------------------------------------------------------
 
     def sync_schema_to_catalog(self, catalog) -> Tuple[Any, int]:
-        """
-        Query information_schema to pull real table stats and push them into
-        the provided ``Catalog`` instance.
-
-        Returns (updated_catalog, tables_imported_count).
-
-        Queries
-        ~~~~~~~
-        - information_schema.TABLES  → TABLE_NAME, TABLE_ROWS
-        - information_schema.COLUMNS → TABLE_NAME, COLUMN_NAME (ordered by ORDINAL_POSITION)
-
-        Note: TABLE_ROWS is an *estimate* for InnoDB (updated by ANALYZE TABLE).
-        We use max(1, TABLE_ROWS) to avoid zero-cardinality entries.
-        """
         self._require_connection()
         cursor = self._connection.cursor(dictionary=True)
 

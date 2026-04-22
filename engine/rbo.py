@@ -9,7 +9,7 @@ of statistics.
 
 Rules implemented
 ~~~~~~~~~~~~~~~~~
-1. **Predicate Pushdown** – Move a SelectNode (WHERE filter) as *close to
+1. **Predicate Pushdown** - Move a SelectNode (WHERE filter) as *close to
    the data source* as possible, i.e., below joins and immediately above the
    relevant ScanNode.  This dramatically reduces the number of rows that
    flow through expensive join operations.
@@ -38,7 +38,7 @@ Rules implemented
    must stay above the LEFT JoinNode.  Similarly for RIGHT JOIN / left-side
    predicates.
 
-2. **Projection Pushdown** – Determine the exact set of columns required by
+2. **Projection Pushdown** - Determine the exact set of columns required by
    the query (from the top-level ProjectNode, intermediate SelectNode
    predicates, JoinNode conditions, and AggregateNode keys/functions), then
    insert new, narrow ProjectNodes immediately above every ScanNode so that
