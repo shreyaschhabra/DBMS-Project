@@ -1,56 +1,4 @@
-"""
-engine/cbo.py
--------------
-Cost-Based Optimizer (CBO)
-
-Uses table cardinality statistics from the Catalog to choose the *cheapest*
-join ordering when multiple tables are joined.
-
-Cost Model
-~~~~~~~~~~
-A simplified, yet realistic, cost model based on the *intermediate result
-size* of each join:
-
-    cost(A JOIN B) = cardinality(A) * cardinality(B)
-
-For a chain of three tables A, B, C the optimizer evaluates every possible
-left-deep ordering and picks the one with the minimum total cost:
-
-    Ordering 1: (A ⋈ B) ⋈ C   cost = |A|*|B| + (|A|*|B|)*|C|
-    Ordering 2: (A ⋈ C) ⋈ B   cost = |A|*|C| + (|A|*|C|)*|B|
-    ...etc.
-
-Outer-Join Reordering Safety
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-INNER JOINs are commutative and associative — any ordering produces the same
-result set.  LEFT JOIN and RIGHT JOIN are **not** commutative: swapping the
-table order changes which rows receive NULL padding, which would produce a
-mathematically incorrect result.
-
-When the query contains one or more outer joins (LEFT/RIGHT/FULL), the CBO
-detects this and **preserves the original query order** (as written by the
-user), falling back to cost estimation only for reporting purposes rather
-than actually reordering the tables.
-
-The optimizer also correctly:
-  - Preserves all join conditions from the original tree.
-  - Wraps ScanNodes in their pushed-down SelectNodes if present.
-  - Peels and re-attaches AggregateNode and ProjectNode wrappers.
-  - Supports SubqueryNode (CTE / inline subquery) as virtual table sources
-    with a default cardinality of 1 (unknown derived-table size).
-  - Returns both the rewritten tree and a detailed cost report.
-
-Usage::
-
-    from engine.cbo import CostBasedOptimizer
-    from engine.catalog import Catalog
-
-    cbo    = CostBasedOptimizer(catalog=Catalog())
-    result = cbo.optimize(rbo_tree)
-    print(result.cost)           # integer
-    print(result.cost_report)    # human-readable breakdown
-    print(result.plan.explain()) # final physical plan
-"""
+""" cbo.py """
 
 from __future__ import annotations
 
@@ -203,7 +151,7 @@ class CostBasedOptimizer:
         # report the estimated cost of the as-written plan only.
         has_outer = any(t.is_outer for t in table_infos)
         if has_outer:
-            original_cost, breakdown = self._compute_order_cost(table_infos)
+            original_cost, breakdown = self._compute_order_cost(table_infos, join_conditions)
             outer_tables = [t.name for t in table_infos if t.is_outer]
             cost_lines = [
                 "Join Ordering Cost Analysis:",
@@ -247,7 +195,7 @@ class CostBasedOptimizer:
         cost_lines = ["Join Ordering Cost Analysis:", "─" * 48]
 
         for perm in itertools.permutations(table_infos):
-            cost, breakdown = self._compute_order_cost(list(perm))
+            cost, breakdown = self._compute_order_cost(list(perm), join_conditions)
             label = " \u22c8 ".join(t.name for t in perm)
             cost_lines.append(f"  ({label})")
             cost_lines.append(f"    -> cost = {cost:,}  [{breakdown}]")
@@ -438,29 +386,33 @@ class CostBasedOptimizer:
     # ------------------------------------------------------------------
 
     def _compute_order_cost(
-        self, order: List[_TableInfo]
+        self, order: List[_TableInfo], join_conditions: List[str]
     ) -> Tuple[int, str]:
         """
         Compute the total cost of joining tables in *order* left-to-right.
-
-        Cost model:
-            intermediate = cardinality(T1)
-            for each subsequent table Ti:
-                step_cost    = intermediate * cardinality(Ti)
-                total_cost  += step_cost
-                intermediate = step_cost
-
-        Returns (total_cost, breakdown_string).
         """
         intermediate = order[0].cardinality
         total        = 0
         steps        = [str(order[0].cardinality)]
 
+        introduced = [order[0].name]
+        used_conds = set()
+
         for info in order[1:]:
-            step         = intermediate * info.cardinality
-            total       += step
-            intermediate = step
-            steps.append(f"*{info.cardinality}={step:,}")
+            introduced.append(info.name)
+            matched_cond = self._find_condition(introduced, join_conditions, used_conds, strict=True)
+            
+            if matched_cond:
+                used_conds.add(matched_cond)
+                step         = int(intermediate * info.cardinality * 0.1)
+                total       += step
+                intermediate = max(intermediate, info.cardinality)
+                steps.append(f"*{info.cardinality}={step:,}")
+            else:
+                step         = intermediate * info.cardinality
+                total       += step
+                intermediate = step
+                steps.append(f"*(Cross){info.cardinality}={step:,}")
 
         return total, " ".join(steps)
 
@@ -517,6 +469,7 @@ class CostBasedOptimizer:
         tables: List[str],
         conditions: List[str],
         used: set,
+        strict: bool = False,
     ) -> Optional[str]:
         """
         Find a join condition that references at least two of the currently
@@ -539,9 +492,10 @@ class CostBasedOptimizer:
                 return cond
 
         # Fallback: return any unused condition.
-        for cond in conditions:
-            if cond not in used:
-                return cond
+        if not strict:
+            for cond in conditions:
+                if cond not in used:
+                    return cond
 
         return None
 
