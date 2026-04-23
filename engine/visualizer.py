@@ -1,43 +1,4 @@
-"""
-engine/visualizer.py
---------------------
-Plan Tree Visualizer
-
-Provides a utility class ``PlanVisualizer`` that converts a PlanNode tree into
-a rich, multi-line ASCII string suitable for display in terminals or web
-interfaces (e.g., Streamlit tree-container blocks).
-
-The output uses box-drawing characters to make the tree structure clear:
-
-    Project [ users.name, countries.country_name ]
-    └── InnerJoin [ ON cities.country_id = countries.id ]
-         ├── InnerJoin [ ON users.city_id = cities.id ]
-         │    ├── Filter [ users.id > 500 ]
-         │    │    └── SeqScan [ users ]
-         │    └── SeqScan [ cities ]
-         └── SeqScan [ countries ]
-
-Outer-join example:
-
-    Project [ users.name, orders.amount ]
-    └── LeftJoin [ ON users.id = orders.user_id ]
-         ├── Filter [ users.id > 5 ]
-         │    └── SeqScan [ users ]
-         └── SeqScan [ orders ]
-
-OR-filter example:
-
-    Project [ users.id, users.name ]
-    └── OrFilter [ users.id > 5 OR users.id < 2 ]
-         └── SeqScan [ users ]
-
-Usage::
-
-    from engine.visualizer import PlanVisualizer
-    vis    = PlanVisualizer()
-    output = vis.render(plan_root)
-    print(output)
-"""
+""" visualizer.py """
 
 from __future__ import annotations
 

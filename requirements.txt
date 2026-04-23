@@ -1,6 +1,6 @@
 sqlparse
 sqlglot
 streamlit
-mysql.connector
+mysql-connector-python
 sqlalchemy
-dotenv
+python-dotenv
