@@ -144,7 +144,8 @@ with st.sidebar:
     # ── Catalog viewer ───────────────────────────────────────────────────
     st.markdown("<div class='section-label'>Database Catalog</div>", unsafe_allow_html=True)
     st.markdown(
-        "<p style='color:rgba(255,255,255,0.6);font-size:0.78rem;margin-bottom:0.7rem;line-height:1.65'>"
+        "<p style='color:rgba(255,255,255,0.55);font-size:0.75rem;margin-bottom:0.7rem;line-height:1.65;"
+        "font-family:JetBrains Mono,monospace;font-weight:500;letter-spacing:0.04em'>"
         "Live statistics used by the CBO. Edit in the Schema tab.</p>",
         unsafe_allow_html=True,
     )
@@ -167,8 +168,9 @@ with st.sidebar:
         )
     if len(all_stats) > 8:
         st.markdown(
-            f"<p style='font-size:0.72rem;color:rgba(255,255,255,0.5);margin:0.3rem 0 0.6rem'>"
-            f"+ {len(all_stats)-8} more tables — see Schema tab</p>",
+            f"<p style='font-size:0.68rem;color:rgba(255,255,255,0.45);margin:0.3rem 0 0.6rem;"
+            f"font-family:JetBrains Mono,monospace;font-weight:700;letter-spacing:0.08em;text-transform:uppercase'>"
+            f"+ {len(all_stats)-8} more — see Schema tab</p>",
             unsafe_allow_html=True,
         )
 
@@ -237,7 +239,8 @@ st.markdown(
 
 st.markdown("<div class='section-label'>SQL Query</div>", unsafe_allow_html=True)
 st.markdown(
-    "<p style='color:#525252;font-size:0.9rem;margin-bottom:0.65rem;line-height:1.75'>"
+    "<p style='color:rgba(255,255,255,0.75);font-size:0.88rem;margin-bottom:0.65rem;line-height:1.65;"
+    "font-family:DM Sans,sans-serif;font-weight:500'>"
     "Enter a SELECT with JOINs and WHERE clauses. Supports INNER/LEFT/RIGHT JOINs, "
     "AND/OR predicates, CTEs, and GROUP BY.</p>",
     unsafe_allow_html=True,
@@ -383,9 +386,10 @@ if run_clicked or sql_input:
                 with st.expander(f"Predicate Rules Fired ({len(predicate_rules)})"):
                     for i, r in enumerate(predicate_rules, 1):
                         st.markdown(
-                            f"<div style='font-size:0.85rem;padding:0.4rem 0;"
-                            f"border-bottom:1px solid #000000;color:#525252;line-height:1.65'>"
-                            f"<strong style='color:#000000;margin-right:0.5rem'>{i}.</strong>{r}</div>",
+                            f"<div style='font-size:0.83rem;padding:0.4rem 0;"
+                            f"border-bottom:3px solid #000000;color:#000000;line-height:1.65;"
+                            f"font-family:Outfit,sans-serif;font-weight:500'>"
+                            f"<strong style='color:var(--max-tertiary);margin-right:0.5rem;font-weight:900'>{i}.</strong>{r}</div>",
                             unsafe_allow_html=True,
                         )
 
@@ -402,9 +406,10 @@ if run_clicked or sql_input:
                 with st.expander(f"Projection Rules Fired ({len(projection_rules)})"):
                     for i, r in enumerate(projection_rules, 1):
                         st.markdown(
-                            f"<div style='font-size:0.85rem;padding:0.4rem 0;"
-                            f"border-bottom:1px solid #000000;color:#525252;line-height:1.65'>"
-                            f"<strong style='color:#000000;margin-right:0.5rem'>{i}.</strong>{r}</div>",
+                            f"<div style='font-size:0.83rem;padding:0.4rem 0;"
+                            f"border-bottom:3px solid #000000;color:#000000;line-height:1.65;"
+                            f"font-family:Outfit,sans-serif;font-weight:500'>"
+                            f"<strong style='color:var(--max-tertiary);margin-right:0.5rem;font-weight:900'>{i}.</strong>{r}</div>",
                             unsafe_allow_html=True,
                         )
 
@@ -504,7 +509,8 @@ if run_clicked or sql_input:
                                 st.error(str(e))
                 else:
                     st.markdown(
-                        "<p style='font-size:0.78rem;color:#525252;padding-top:0.5rem'>"
+                        "<p style='font-size:0.72rem;color:rgba(255,255,255,0.45);padding-top:0.5rem;"
+                        "font-family:JetBrains Mono,monospace;font-weight:500;letter-spacing:0.06em'>"
                         "Connect a DB to enable sync.</p>",
                         unsafe_allow_html=True,
                     )
@@ -516,11 +522,13 @@ if run_clicked or sql_input:
         with tab5:
             if not live_db:
                 st.markdown(
-                    "<div style='margin-top:1.5rem;padding:1.5rem;background:#F5F5F5;"
-                    "border:1px solid #000000;text-align:center'>"
-                    "<div style='font-weight:600;color:#000000;margin-bottom:0.3rem'>"
+                    "<div style='margin-top:1.5rem;padding:1.75rem;background:rgba(45,27,78,0.6);"
+                    "border:4px solid #000000;text-align:center;"
+                    "box-shadow:8px 8px 0px 0px #000000'>"
+                    "<div style='font-weight:900;color:#FFFFFF;margin-bottom:0.4rem;"
+                    "font-family:Outfit,sans-serif;font-size:1rem;text-transform:uppercase;letter-spacing:0.1em'>"
                     "No Live Database Connected</div>"
-                    "<div style='font-size:0.85rem;color:#525252'>"
+                    "<div style='font-size:0.85rem;color:rgba(255,255,255,0.75);font-family:DM Sans,sans-serif;font-weight:500'>"
                     "Enter MySQL credentials in the sidebar and click "
                     "<strong>Connect &amp; Sync Catalog</strong> to enable query benchmarking.</div>"
                     "</div>",
@@ -565,8 +573,9 @@ if run_clicked or sql_input:
                 row_label, mc1, mc2 = st.columns([0.8, 2, 2])
                 with row_label:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:#525252;"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
+                        "<div style='font-size:0.68rem;font-weight:800;color:var(--max-secondary);"
+                        "text-transform:uppercase;letter-spacing:0.18em;padding-top:1.2rem;"
+                        "font-family:Outfit,sans-serif;text-shadow:0 0 8px rgba(0,245,212,0.4)'>"
                         "Exec Time</div>",
                         unsafe_allow_html=True,
                     )
@@ -579,8 +588,9 @@ if run_clicked or sql_input:
                 row_label2, mc3, mc4 = st.columns([0.8, 2, 2])
                 with row_label2:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:#525252;"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
+                        "<div style='font-size:0.68rem;font-weight:800;color:var(--max-secondary);"
+                        "text-transform:uppercase;letter-spacing:0.18em;padding-top:1.2rem;"
+                        "font-family:Outfit,sans-serif;text-shadow:0 0 8px rgba(0,245,212,0.4)'>"
                         "Rows</div>",
                         unsafe_allow_html=True,
                     )
@@ -588,13 +598,14 @@ if run_clicked or sql_input:
                     st.metric(label="Unoptimized — Rows", value=f"{r_unopt:,}", label_visibility="collapsed")
                 with mc4:
                     delta_r = r_opt - r_unopt
-                    st.metric(label="Optimized — Rows", value=f"{r_opt:,}", delta=f"{delta_r:+,}" if delta_r != 0 else "✓ Match", delta_color="off" if delta_r == 0 else "normal", label_visibility="collapsed")
+                    st.metric(label="Optimized — Rows", value=f"{r_opt:,}", delta=f"{delta_r:+,}" if delta_r != 0 else "Match", delta_color="off" if delta_r == 0 else "normal", label_visibility="collapsed")
 
                 row_label3, mc5, mc6 = st.columns([0.8, 2, 2])
                 with row_label3:
                     st.markdown(
-                        "<div style='font-size:0.75rem;font-weight:600;color:#525252;"
-                        "text-transform:uppercase;letter-spacing:0.07em;padding-top:1.2rem'>"
+                        "<div style='font-size:0.68rem;font-weight:800;color:var(--max-secondary);"
+                        "text-transform:uppercase;letter-spacing:0.18em;padding-top:1.2rem;"
+                        "font-family:Outfit,sans-serif;text-shadow:0 0 8px rgba(0,245,212,0.4)'>"
                         "MySQL Cost</div>",
                         unsafe_allow_html=True,
                     )
@@ -649,11 +660,12 @@ if run_clicked or sql_input:
 
 else:
     st.markdown(
-        "<div style='margin-top:2rem;padding:1.5rem 1.75rem;"
-        "background:#F5F5F5;border:2px solid #000000;"
-        "font-family:&quot;Source Serif 4&quot;,Georgia,serif;"
-        "color:#525252;font-size:0.95rem;line-height:1.8'>"
-        "Enter an SQL query above and click <strong style='color:#000000'>"
+        "<div style='margin-top:2rem;padding:1.75rem 2rem;"
+        "background:#FFFDF5;border:4px solid #000000;"
+        "box-shadow:8px 8px 0px 0px #000000;"
+        "font-family:Outfit,sans-serif;"
+        "color:rgba(255,255,255,0.75);font-size:0.95rem;line-height:1.75;font-weight:400'>"
+        "Enter an SQL query above and click <strong style='color:var(--max-tertiary);font-weight:900'>"
         "Optimize Query</strong> to start. "
         "Connect a MySQL database in the sidebar for live execution benchmarks."
         "</div>",
@@ -667,32 +679,78 @@ else:
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Source+Serif+4:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=DM+Sans:wght@400;500;700&family=Bungee&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
     /* ── Design tokens ──────────────────────────────────────────────── */
     :root {
-        --bg:            #FFFFFF;
-        --fg:            #000000;
-        --muted:         #525252;
-        --border:        #000000;
-        --border-light:  #E5E5E5;
-        --sidebar-bg:    #000000;
+        --max-bg:        #0D0D1A;
+        --max-fg:        #FFFFFF;
+        --max-muted:     #2D1B4E;
+        --max-border:    #FF3AF2;
+        --max-accent:    #FF3AF2;
+        --max-secondary: #00F5D4;
+        --max-tertiary:  #FFE600;
+        --max-quaternary:#FF6B35;
+        --max-quinary:   #7B2FFF;
+        --sidebar-bg:    #0D0D1A;
         --sidebar-fg:    #FFFFFF;
-        --sidebar-muted: rgba(255,255,255,0.55);
+        --glow-sm:       0 0 20px rgba(255,58,242,0.5), 0 0 40px rgba(0,245,212,0.3);
+        --glow-lg:       0 0 40px rgba(255,58,242,0.6), 0 0 80px rgba(255,230,0,0.4), 0 0 120px rgba(123,47,255,0.3);
+        --shadow-hard:   8px 8px 0 #FFE600, 16px 16px 0 #FF3AF2;
+        --shadow-hard-lg:12px 12px 0 #00F5D4, 24px 24px 0 #FF3AF2, 36px 36px 0 #FFE600;
+    }
+
+    /* ── Keyframe Animations ────────────────────────────────────────── */
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%       { transform: translateY(-18px) rotate(4deg); }
+    }
+    @keyframes float-reverse {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%       { transform: translateY(18px) rotate(-4deg); }
+    }
+    @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(255,58,242,0.5), 0 0 40px rgba(0,245,212,0.3); }
+        50%       { box-shadow: 0 0 40px rgba(255,58,242,0.8), 0 0 80px rgba(0,245,212,0.5), 0 0 100px rgba(123,47,255,0.4); }
+    }
+    @keyframes gradient-shift {
+        0%   { background-position: 0% 50%; }
+        50%  { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes spin-slow {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+    @keyframes wiggle {
+        0%, 100% { transform: rotate(-3deg); }
+        50%       { transform: rotate(3deg); }
+    }
+    @keyframes bounce-subtle {
+        0%, 100% { transform: translateY(0); }
+        50%       { transform: translateY(-10px); }
     }
 
     /* ── Global reset ───────────────────────────────────────────────── */
     html, body, .stApp {
-        font-family: 'Source Serif 4', Georgia, serif;
-        background: var(--bg);
-        color: var(--fg);
+        font-family: 'DM Sans', sans-serif;
+        background: var(--max-bg);
+        color: var(--max-fg);
         -webkit-font-smoothing: antialiased;
     }
 
     body {
+        background-color: var(--max-bg);
         background-image:
-            repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(0,0,0,0.03) 24px),
-            repeating-linear-gradient(90deg, transparent, transparent 143px, rgba(0,0,0,0.018) 144px);
+            radial-gradient(circle, rgba(255,58,242,0.8) 1px, transparent 1px),
+            repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,230,0,0.04) 10px,
+                rgba(255,230,0,0.04) 20px
+            );
+        background-size: 28px 28px, 100% 100%;
         background-attachment: fixed;
     }
 
@@ -705,18 +763,18 @@ st.markdown(
     /* ── HR ──────────────────────────────────────────────────────────── */
     hr {
         border: none;
-        border-top: 1px solid #000000;
+        border-top: 4px dashed var(--max-accent);
         margin: 1.5rem 0;
+        opacity: 0.6;
     }
 
     /* ── Sidebar ────────────────────────────────────────────────────── */
     section[data-testid="stSidebar"] {
         background: var(--sidebar-bg);
-        border-right: 2px solid var(--border);
-        box-shadow: none;
+        border-right: 4px solid var(--max-accent);
+        box-shadow: 0 0 40px rgba(255,58,242,0.4), 0 0 80px rgba(123,47,255,0.2);
     }
 
-    /* Broad rule: all text inside sidebar is white */
     section[data-testid="stSidebar"] p,
     section[data-testid="stSidebar"] label,
     section[data-testid="stSidebar"] span,
@@ -730,42 +788,46 @@ st.markdown(
         color: var(--sidebar-fg);
     }
 
-    /* db-connected-badge is inside the sidebar but has a white background
-       and needs black text. Being more specific than the rule above wins. */
     section[data-testid="stSidebar"] div.db-connected-badge {
-        color: #000000;
-        background: #FFFFFF;
-        border-color: #000000;
+        color: #0D0D1A;
+        background: var(--max-tertiary);
+        border-color: var(--max-secondary);
     }
 
     section[data-testid="stSidebar"] hr {
         border: none;
-        border-top: 1px solid rgba(255,255,255,0.28);
+        border-top: 2px dashed rgba(255,58,242,0.4);
         margin: 1rem 0;
     }
 
     /* Sidebar buttons */
     section[data-testid="stSidebar"] .stButton > button {
-        background: #FFFFFF;
-        color: #000000;
-        border: 2px solid #FFFFFF;
-        border-radius: 0;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
+        background: linear-gradient(135deg, var(--max-accent), var(--max-quinary), var(--max-secondary));
+        background-size: 200% 200%;
+        color: #FFFFFF;
+        border: 3px solid var(--max-tertiary);
+        border-radius: 999px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        transition: background 100ms linear, color 100ms linear, border-color 100ms linear;
+        box-shadow: 0 0 20px rgba(255,58,242,0.5), 4px 4px 0 var(--max-tertiary);
+        transition: transform 200ms cubic-bezier(0.68,-0.55,0.265,1.55), box-shadow 200ms ease-out;
+        animation: gradient-shift 4s ease infinite;
     }
     section[data-testid="stSidebar"] .stButton > button p,
     section[data-testid="stSidebar"] .stButton > button span,
     section[data-testid="stSidebar"] .stButton > button div {
-        color: #000000;
+        color: #FFFFFF;
     }
     section[data-testid="stSidebar"] .stButton > button:hover {
-        background: #000000;
-        color: #FFFFFF;
-        border-color: #FFFFFF;
+        transform: scale(1.05);
+        box-shadow: 0 0 30px rgba(255,58,242,0.7), 0 0 60px rgba(0,245,212,0.4), 6px 6px 0 var(--max-tertiary);
+    }
+    section[data-testid="stSidebar"] .stButton > button:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 10px rgba(255,58,242,0.3);
     }
     section[data-testid="stSidebar"] .stButton > button:hover p,
     section[data-testid="stSidebar"] .stButton > button:hover span,
@@ -776,36 +838,37 @@ st.markdown(
     /* Sidebar inputs */
     section[data-testid="stSidebar"] [data-baseweb="input"],
     section[data-testid="stSidebar"] [data-baseweb="base-input"] {
-        background: rgba(255,255,255,0.10);
-        border: 2px solid rgba(255,255,255,0.4);
-        border-radius: 0;
+        background: rgba(45,27,78,0.6);
+        border: 3px solid var(--max-secondary);
+        border-radius: 12px;
     }
     section[data-testid="stSidebar"] [data-baseweb="input"] input,
     section[data-testid="stSidebar"] [data-baseweb="base-input"] input,
     section[data-testid="stSidebar"] input[type="text"],
     section[data-testid="stSidebar"] input[type="password"],
     section[data-testid="stSidebar"] input[type="number"] {
-        background: rgba(255,255,255,0.10);
+        background: rgba(45,27,78,0.6);
         color: #FFFFFF;
         -webkit-text-fill-color: #FFFFFF;
-        border: 2px solid rgba(255,255,255,0.4);
-        border-radius: 0;
-        box-shadow: none;
+        border: 3px solid var(--max-secondary);
+        border-radius: 12px;
+        box-shadow: 0 0 12px rgba(0,245,212,0.3);
         min-height: 3.25rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 700;
     }
     section[data-testid="stSidebar"] input::placeholder,
     section[data-testid="stSidebar"] input::-webkit-input-placeholder {
-        color: rgba(255,255,255,0.45);
-        -webkit-text-fill-color: rgba(255,255,255,0.45);
+        color: rgba(255,255,255,0.35);
+        -webkit-text-fill-color: rgba(255,255,255,0.35);
         opacity: 1;
     }
     section[data-testid="stSidebar"] input[type="text"]:focus,
     section[data-testid="stSidebar"] input[type="password"]:focus,
     section[data-testid="stSidebar"] input[type="number"]:focus {
-        border-color: #FFFFFF;
-        outline: 2px solid rgba(255,255,255,0.6);
-        outline-offset: 2px;
-        box-shadow: none;
+        border-color: var(--max-accent);
+        outline: none;
+        box-shadow: 0 0 20px rgba(255,58,242,0.5), 0 0 40px rgba(0,245,212,0.3);
     }
 
     /* ── Main inputs + textarea ──────────────────────────────────────── */
@@ -814,11 +877,12 @@ st.markdown(
     input[type="number"],
     textarea {
         font-family: 'JetBrains Mono', monospace;
-        background: #FFFFFF;
-        color: #000000;
-        border: 2px solid #000000;
-        border-radius: 0;
-        box-shadow: none;
+        font-weight: 700;
+        background: rgba(45,27,78,0.7);
+        color: #FFFFFF;
+        border: 4px solid var(--max-accent);
+        border-radius: 16px;
+        box-shadow: 0 0 20px rgba(255,58,242,0.4), 8px 8px 0 var(--max-tertiary);
     }
     input[type="text"],
     input[type="password"],
@@ -827,123 +891,151 @@ st.markdown(
     input[type="password"]:focus,
     input[type="number"]:focus,
     textarea:focus {
-        border-color: #000000;
-        outline: 3px solid #000000;
-        outline-offset: 2px;
-        box-shadow: none;
+        border-color: var(--max-secondary);
+        outline: none;
+        box-shadow: 0 0 30px rgba(0,245,212,0.6), 0 0 60px rgba(255,58,242,0.3), 8px 8px 0 var(--max-tertiary);
+        background: rgba(45,27,78,0.9);
     }
 
     /* ── Main buttons ────────────────────────────────────────────────── */
     .stButton > button {
-        background: #000000;
+        background: linear-gradient(90deg, var(--max-accent), var(--max-quinary), var(--max-secondary));
+        background-size: 200% 200%;
         color: #FFFFFF;
-        border: 2px solid #000000;
-        border-radius: 0;
-        padding: 0.75rem 1.35rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
+        border: 4px solid var(--max-tertiary);
+        border-radius: 999px;
+        padding: 0.75rem 1.75rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        transition: background 100ms linear, color 100ms linear, border-color 100ms linear;
-        box-shadow: none;
+        box-shadow: 0 0 20px rgba(255,58,242,0.5), 8px 8px 0 var(--max-tertiary), 16px 16px 0 var(--max-accent);
+        transition: transform 200ms cubic-bezier(0.68,-0.55,0.265,1.55), box-shadow 200ms ease-out;
         white-space: nowrap;
+        animation: gradient-shift 4s ease infinite;
+        will-change: transform;
     }
     .stButton > button p,
     .stButton > button span,
     .stButton > button div { color: #FFFFFF; }
     .stButton > button:hover {
-        background: #FFFFFF;
-        color: #000000;
-        border-color: #000000;
-        transform: none;
-        box-shadow: none;
+        transform: scale(1.08) translateY(-2px);
+        box-shadow: 0 0 40px rgba(255,58,242,0.7), 0 0 80px rgba(0,245,212,0.4), 10px 10px 0 var(--max-tertiary), 20px 20px 0 var(--max-accent);
+        color: #FFFFFF;
+        border-color: var(--max-tertiary);
     }
     .stButton > button:hover p,
     .stButton > button:hover span,
-    .stButton > button:hover div { color: #000000; }
-    .stButton > button:active { transform: none; }
+    .stButton > button:hover div { color: #FFFFFF; }
+    .stButton > button:active {
+        transform: scale(0.96);
+        box-shadow: 0 0 12px rgba(255,58,242,0.4);
+    }
 
     /* ── Code blocks ─────────────────────────────────────────────────── */
     .stCodeBlock pre, .stCodeBlock code, pre, code {
         font-family: 'JetBrains Mono', monospace;
-        background: #FFFFFF;
-        color: #000000;
-        border: 1px solid #000000;
-        border-radius: 0;
-        box-shadow: none;
+        background: rgba(45,27,78,0.8);
+        color: var(--max-secondary);
+        border: 4px solid var(--max-quinary);
+        border-radius: 16px;
+        box-shadow: 0 0 20px rgba(123,47,255,0.4), 8px 8px 0 var(--max-accent);
     }
 
     /* ── Tabs ────────────────────────────────────────────────────────── */
     .stTabs [data-baseweb="tab-list"] {
-        background: #FFFFFF;
-        border-bottom: 2px solid #000000;
-        gap: 0;
-        padding: 0;
+        background: rgba(45,27,78,0.5);
+        border-bottom: 4px solid var(--max-accent);
+        gap: 4px;
+        padding: 4px 4px 0;
+        border-radius: 16px 16px 0 0;
     }
     .stTabs [data-baseweb="tab"] {
-        background: #FFFFFF;
-        color: #000000;
-        border: 1px solid #000000;
+        background: rgba(45,27,78,0.6);
+        color: rgba(255,255,255,0.7);
+        border: 3px solid var(--max-quinary);
         border-bottom: none;
-        border-radius: 0;
-        padding: 0.8rem 1.05rem;
-        font-family: 'JetBrains Mono', monospace;
+        border-radius: 12px 12px 0 0;
+        padding: 0.8rem 1.1rem;
+        font-family: 'Outfit', sans-serif;
         font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-weight: 800;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        transition: background 100ms linear, color 100ms linear;
+        transition: background 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out, transform 200ms ease-out;
     }
-    .stTabs [data-baseweb="tab"]:hover { background: #000000; color: #FFFFFF; }
-    .stTabs [aria-selected="true"]     { background: #000000; color: #FFFFFF; }
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(123,47,255,0.4);
+        color: #FFFFFF;
+        box-shadow: 0 0 16px rgba(123,47,255,0.5);
+        transform: translateY(-2px);
+    }
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, var(--max-accent), var(--max-quinary));
+        color: #FFFFFF;
+        box-shadow: 0 0 20px rgba(255,58,242,0.5);
+        border-color: var(--max-tertiary);
+    }
     .stTabs [data-baseweb="tab-highlight"],
     .stTabs [data-baseweb="tab-border"] { display: none; }
 
     /* ── st.metric ───────────────────────────────────────────────────── */
     [data-testid="stMetric"] {
-        border: 1px solid #000000;
-        border-radius: 0;
-        background: #FFFFFF;
+        border: 4px solid var(--max-secondary);
+        border-radius: 24px;
+        background: rgba(45,27,78,0.7);
         padding: 1rem;
+        box-shadow: 0 0 20px rgba(0,245,212,0.3), 8px 8px 0 var(--max-accent);
+        transition: transform 300ms cubic-bezier(0.68,-0.55,0.265,1.55), box-shadow 300ms ease-out;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: scale(1.04) rotate(1deg);
+        box-shadow: 0 0 40px rgba(0,245,212,0.5), 0 0 80px rgba(255,58,242,0.3), 10px 10px 0 var(--max-accent);
     }
     [data-testid="stMetric"] label {
-        color: #000000;
-        font-family: 'JetBrains Mono', monospace;
+        color: var(--max-secondary);
+        font-family: 'Outfit', sans-serif;
         font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        font-weight: 800;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
     }
     [data-testid="stMetricValue"] {
-        color: #000000;
-        font-family: 'Playfair Display', Georgia, serif;
-        font-weight: 700;
+        color: #FFFFFF;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 900;
+        text-shadow: 2px 2px 0px var(--max-quinary), 4px 4px 0px var(--max-accent);
     }
     [data-testid="stMetricDelta"] svg { display: inline; }
 
     /* ── Expander ────────────────────────────────────────────────────── */
     .streamlit-expanderHeader {
-        background: #FFFFFF;
-        border: 1px solid #000000;
-        border-radius: 0;
-        color: #000000;
-        box-shadow: none;
-        font-family: 'JetBrains Mono', monospace;
+        background: rgba(45,27,78,0.6);
+        border: 4px solid var(--max-quaternary);
+        border-radius: 12px;
+        color: #FFFFFF;
+        box-shadow: 0 0 16px rgba(255,107,53,0.4), 6px 6px 0 var(--max-accent);
+        font-family: 'Outfit', sans-serif;
         font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-weight: 800;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
-        transition: background 100ms linear, color 100ms linear;
+        transition: background 200ms ease-out, box-shadow 200ms ease-out, transform 200ms ease-out;
     }
-    .streamlit-expanderHeader:hover { background: #000000; color: #FFFFFF; }
+    .streamlit-expanderHeader:hover {
+        background: rgba(123,47,255,0.4);
+        color: #FFFFFF;
+        transform: scale(1.01) translateY(-1px);
+        box-shadow: 0 0 30px rgba(255,107,53,0.5), 8px 8px 0 var(--max-accent);
+    }
 
     /* ── Data editor ─────────────────────────────────────────────────── */
     [data-testid="stDataEditor"] {
-        border: 1px solid #000000;
-        border-radius: 0;
+        border: 4px solid var(--max-quinary);
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: none;
+        box-shadow: 0 0 30px rgba(123,47,255,0.4), 8px 8px 0 var(--max-secondary);
     }
 
     /* ══════════════════ Custom components ════════════════════════════ */
@@ -952,45 +1044,66 @@ st.markdown(
     .page-header {
         position: relative;
         overflow: hidden;
-        padding: 2.5rem 1.5rem 1.6rem;
+        padding: 3rem 2rem 2.25rem;
         margin-bottom: 2rem;
-        background: #000000;
+        background: linear-gradient(135deg, #0D0D1A 0%, #1A0A2E 50%, #0D1A1A 100%);
         color: #FFFFFF;
-        border: 2px solid #000000;
-        border-radius: 0;
-        box-shadow: none;
+        border: 4px solid var(--max-accent);
+        border-radius: 24px;
+        box-shadow: 0 0 40px rgba(255,58,242,0.5), 0 0 80px rgba(123,47,255,0.3), 12px 12px 0 var(--max-tertiary), 24px 24px 0 var(--max-accent);
     }
     .page-header::before {
         content: "";
         position: absolute;
         inset: 0;
-        background-image: repeating-linear-gradient(
-            90deg, transparent, transparent 1px,
-            rgba(255,255,255,0.06) 1px, rgba(255,255,255,0.06) 2px
-        );
-        opacity: 0.12;
+        background-image:
+            radial-gradient(ellipse at 15% 20%, rgba(255,58,242,0.2) 0%, transparent 45%),
+            radial-gradient(ellipse at 85% 80%, rgba(0,245,212,0.15) 0%, transparent 45%),
+            radial-gradient(ellipse at 50% 50%, rgba(123,47,255,0.1) 0%, transparent 60%),
+            radial-gradient(circle, rgba(255,230,0,0.6) 1px, transparent 1px);
+        background-size: 100% 100%, 100% 100%, 100% 100%, 22px 22px;
+        opacity: 0.85;
         pointer-events: none;
+        border-radius: 20px;
+    }
+    .page-header::after {
+        content: "SQL";
+        position: absolute;
+        right: 1rem;
+        bottom: -2rem;
+        font-family: 'Bungee', cursive;
+        font-size: clamp(5rem, 14vw, 11rem);
+        font-weight: 900;
+        color: transparent;
+        -webkit-text-stroke: 2px rgba(255,58,242,0.18);
+        pointer-events: none;
+        line-height: 1;
+        z-index: 0;
+        text-shadow: 4px 4px 0px rgba(0,245,212,0.1);
     }
     .page-header-title {
         position: relative;
         z-index: 1;
-        font-family: 'Playfair Display', Georgia, serif;
-        font-size: clamp(3.25rem, 7vw, 7rem);
-        line-height: 1.2;
-        letter-spacing: -0.05em;
-        font-weight: 800;
+        font-family: 'Outfit', sans-serif;
+        font-size: clamp(2.2rem, 6vw, 5rem);
+        line-height: 1;
+        letter-spacing: -0.03em;
+        font-weight: 900;
         margin: 0 0 0.85rem;
         color: #FFFFFF;
+        text-transform: uppercase;
+        text-shadow: 2px 2px 0px var(--max-quinary), 4px 4px 0px var(--max-accent), 6px 6px 0px var(--max-secondary);
     }
     .page-header-desc {
         position: relative;
         z-index: 1;
-        font-family: 'Source Serif 4', Georgia, serif;
-        font-size: 1.05rem;
-        line-height: 1.85;
-        color: rgba(255,255,255,0.9);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 1rem;
+        line-height: 1.75;
+        color: rgba(255,255,255,0.85);
         max-width: 780px;
         margin: 0;
+        font-weight: 500;
     }
     .page-header-tags {
         position: relative;
@@ -1005,82 +1118,91 @@ st.markdown(
     .tag, .tag-accent, .tag-green, .tag-red {
         display: inline-block;
         padding: 0.3rem 0.8rem;
-        border-radius: 0;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        border-radius: 999px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
         text-transform: uppercase;
-        border: 1px solid #000000;
-        background: #FFFFFF;
-        color: #000000;
-        transition: background 100ms linear, color 100ms linear;
+        border: 3px solid var(--max-secondary);
+        background: rgba(0,245,212,0.12);
+        color: var(--max-secondary);
+        transition: background 200ms ease-out, transform 200ms ease-out, box-shadow 200ms ease-out;
         cursor: default;
     }
-    .tag-accent, .tag-green, .tag-red { background: #000000; color: #FFFFFF; }
-    .tag:hover                         { background: #000000; color: #FFFFFF; }
+    .tag-accent  { background: rgba(255,58,242,0.2); color: var(--max-accent); border-color: var(--max-accent); }
+    .tag-green   { background: rgba(255,230,0,0.15); color: var(--max-tertiary); border-color: var(--max-tertiary); }
+    .tag-red     { background: rgba(255,107,53,0.2); color: var(--max-quaternary); border-color: var(--max-quaternary); }
+    .tag:hover   { background: rgba(0,245,212,0.3); transform: scale(1.06) rotate(1deg); box-shadow: 0 0 12px rgba(0,245,212,0.4); }
 
     /* Section label */
     .section-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: #000000;
+        color: var(--max-accent);
         margin-bottom: 0.55rem;
-        padding-bottom: 0.35rem;
-        border-bottom: 2px solid #000000;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px dashed var(--max-accent);
+        text-shadow: 0 0 10px rgba(255,58,242,0.5);
     }
     section[data-testid="stSidebar"] .section-label {
-        color: #FFFFFF;
-        border-bottom-color: rgba(255,255,255,0.4);
+        color: var(--max-secondary);
+        border-bottom-color: var(--max-secondary);
+        text-shadow: 0 0 10px rgba(0,245,212,0.5);
     }
 
     /* Input hint */
     .input-hint {
-        font-size: 0.8rem;
-        color: var(--muted);
-        padding-top: 0.5rem;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.65);
+        padding-top: 0.6rem;
         line-height: 1.5;
     }
 
     /* Metric cards */
     .metric-card {
-        padding: 1rem;
-        background: #FFFFFF;
-        border: 1px solid #000000;
-        border-radius: 0;
-        box-shadow: none;
-        transition: background 100ms linear;
+        padding: 1.25rem 1.1rem;
+        background: rgba(45,27,78,0.7);
+        border: 4px solid var(--max-accent);
+        border-radius: 20px;
+        box-shadow: 0 0 20px rgba(255,58,242,0.35), 8px 8px 0 var(--max-tertiary);
+        transition: transform 300ms cubic-bezier(0.68,-0.55,0.265,1.55), box-shadow 300ms ease-out;
         cursor: default;
     }
-    .metric-card:hover { background: #000000; }
+    .metric-card:hover {
+        transform: scale(1.04) rotate(-1deg);
+        box-shadow: 0 0 40px rgba(255,58,242,0.55), 0 0 80px rgba(255,230,0,0.3), 10px 10px 0 var(--max-tertiary);
+    }
     .metric-card-value {
-        font-family: 'Playfair Display', Georgia, serif;
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: #000000;
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #FFFFFF;
         line-height: 1;
         margin-bottom: 0.4rem;
+        letter-spacing: -0.03em;
+        text-shadow: 2px 2px 0px var(--max-quinary), 4px 4px 0px var(--max-accent);
     }
-    .metric-card-value.accent,
-    .metric-card-value.amber,
-    .metric-card-value.success,
-    .metric-card-value.green { color: #000000; }
-    .metric-card-value.sm    { font-size: 1rem; }
+    .metric-card-value.accent  { color: var(--max-accent); }
+    .metric-card-value.amber   { color: var(--max-tertiary); }
+    .metric-card-value.success { color: var(--max-secondary); }
+    .metric-card-value.green   { color: var(--max-secondary); }
+    .metric-card-value.sm      { font-size: 1rem; }
     .metric-card:hover .metric-card-value,
-    .metric-card:hover .metric-card-value.accent,
-    .metric-card:hover .metric-card-value.amber,
-    .metric-card:hover .metric-card-value.success,
-    .metric-card:hover .metric-card-value.green,
     .metric-card:hover .metric-card-label { color: #FFFFFF; }
     .metric-card-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        letter-spacing: 0.12em;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.6rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: var(--muted);
+        color: var(--max-secondary);
+        text-shadow: 0 0 8px rgba(0,245,212,0.4);
     }
 
     /* Tree container */
@@ -1088,32 +1210,32 @@ st.markdown(
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.84rem;
         line-height: 1.9;
-        background: #FFFFFF;
-        color: #000000;
-        padding: 1.4rem 1.6rem;
-        border: 2px solid #000000;
-        border-radius: 0;
-        box-shadow: none;
+        background: rgba(13,13,26,0.85);
+        color: var(--max-fg);
+        padding: 1.5rem 1.75rem;
+        border: 4px solid var(--max-quinary);
+        border-radius: 16px;
+        box-shadow: 0 0 30px rgba(123,47,255,0.4), 8px 8px 0 var(--max-accent);
         white-space: pre;
         overflow-x: auto;
         margin-bottom: 1rem;
     }
-    .tree-container .tree-connector { color: #000000; font-weight: 700; }
+    .tree-container .tree-connector { color: var(--max-secondary); font-weight: 700; }
     .tree-container .tree-node {
         display: inline-block;
         margin-right: 0.55rem;
         padding: 0.14rem 0.6rem;
-        border-radius: 0;
-        border: 1px solid #000000;
+        border-radius: 999px;
+        border: 3px solid var(--max-accent);
     }
-    .tree-container .tree-node-project   { background: #F5F5F5; color: #000000; font-weight: 700; }
-    .tree-container .tree-node-filter    { background: #F5F5F5; color: #000000; }
-    .tree-container .tree-node-or-filter { background: #F5F5F5; color: #000000; }
-    .tree-container .tree-node-join      { background: #000000; color: #FFFFFF; font-weight: 600; }
-    .tree-container .tree-node-scan      { background: #F5F5F5; color: #000000; font-weight: 600; }
-    .tree-container .tree-node-aggregate { background: #000000; color: #FFFFFF; font-weight: 700; }
-    .tree-container .tree-node-subquery  { background: #F5F5F5; color: #000000; }
-    .tree-container .tree-meta           { color: var(--muted); }
+    .tree-container .tree-node-project   { background: rgba(123,47,255,0.35); color: #FFFFFF; font-weight: 700; border-color: var(--max-quinary); }
+    .tree-container .tree-node-filter    { background: rgba(255,230,0,0.2); color: var(--max-tertiary); border-color: var(--max-tertiary); }
+    .tree-container .tree-node-or-filter { background: rgba(255,107,53,0.2); color: var(--max-quaternary); border-color: var(--max-quaternary); }
+    .tree-container .tree-node-join      { background: rgba(255,58,242,0.3); color: #FFFFFF; font-weight: 700; border-color: var(--max-accent); }
+    .tree-container .tree-node-scan      { background: rgba(0,245,212,0.2); color: var(--max-secondary); font-weight: 700; border-color: var(--max-secondary); }
+    .tree-container .tree-node-aggregate { background: rgba(255,58,242,0.25); color: var(--max-accent); font-weight: 700; border-color: var(--max-accent); }
+    .tree-container .tree-node-subquery  { background: rgba(45,27,78,0.8); color: rgba(255,255,255,0.8); border-color: var(--max-quinary); }
+    .tree-container .tree-meta           { color: rgba(255,255,255,0.45); font-style: italic; }
     .tree-container .tree-node,
     .tree-container .tree-meta           { line-height: 1.7; }
 
@@ -1131,16 +1253,24 @@ st.markdown(
     .db-connected-badge,
     .metrics-badge {
         display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border: 1px solid #000000;
-        border-radius: 0;
-        background: #FFFFFF;
-        color: #000000;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        padding: 0.3rem 0.85rem;
+        border: 3px solid var(--max-tertiary);
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(255,230,0,0.2), rgba(255,58,242,0.2));
+        color: var(--max-tertiary);
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
+        box-shadow: 0 0 12px rgba(255,230,0,0.4);
+        animation: wiggle 2s ease-in-out infinite;
+    }
+    .db-connected-badge {
+        background: linear-gradient(90deg, rgba(0,245,212,0.2), rgba(255,230,0,0.2));
+        color: var(--max-secondary);
+        border-color: var(--max-secondary);
+        box-shadow: 0 0 12px rgba(0,245,212,0.4);
     }
 
     /* Live metrics */
@@ -1151,161 +1281,190 @@ st.markdown(
         margin-bottom: 1rem;
     }
     .metrics-col-header {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'Outfit', sans-serif;
         font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.09em;
+        font-weight: 800;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0;
+        padding: 0.65rem 1rem;
+        border-radius: 12px;
         text-align: center;
         margin-bottom: 0.75rem;
-        background: #000000;
+        background: rgba(45,27,78,0.8);
         color: #FFFFFF;
-        border: 1px solid #000000;
+        border: 4px solid var(--max-quinary);
+        box-shadow: 0 0 20px rgba(123,47,255,0.4), 6px 6px 0 var(--max-accent);
+    }
+    .metrics-col-header.opt {
+        background: rgba(255,58,242,0.2);
+        color: var(--max-accent);
+        border-color: var(--max-accent);
+        box-shadow: 0 0 20px rgba(255,58,242,0.5), 6px 6px 0 var(--max-tertiary);
     }
 
     /* Catalog entries */
     .catalog-entry {
         padding: 0.8rem 0.9rem;
-        margin-bottom: 0.45rem;
-        background: #FFFFFF;
-        border: 1px solid #000000;
-        border-radius: 0;
-        transition: background 100ms linear;
+        margin-bottom: 0.5rem;
+        background: rgba(45,27,78,0.5);
+        border: 3px solid rgba(0,245,212,0.25);
+        border-radius: 12px;
+        transition: background 200ms ease-out, border-color 200ms ease-out, transform 200ms ease-out, box-shadow 200ms ease-out;
         cursor: default;
     }
-    .catalog-entry:hover { background: #000000; }
+    .catalog-entry:hover {
+        background: rgba(45,27,78,0.8);
+        border-color: var(--max-secondary);
+        transform: translateX(4px);
+        box-shadow: 0 0 16px rgba(0,245,212,0.3);
+    }
     .catalog-entry .ce-name {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.76rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.73rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
-        margin-bottom: 0.25rem;
-        color: #000000;
+        margin-bottom: 0.2rem;
+        color: var(--max-secondary);
     }
     .catalog-entry .ce-rows,
     .catalog-entry .ce-cols {
-        font-family: 'Source Serif 4', Georgia, serif;
-        font-size: 0.9rem;
-        color: var(--muted);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.55);
     }
-    .catalog-entry:hover .ce-name,
     .catalog-entry:hover .ce-rows,
-    .catalog-entry:hover .ce-cols { color: #FFFFFF; }
-
-    /* Catalog entries in the black sidebar need inverted base colors */
-    section[data-testid="stSidebar"] .catalog-entry {
-        background: rgba(255,255,255,0.08);
-        border-color: rgba(255,255,255,0.25);
-    }
-    section[data-testid="stSidebar"] .catalog-entry .ce-name { color: #FFFFFF; }
-    section[data-testid="stSidebar"] .catalog-entry .ce-rows,
-    section[data-testid="stSidebar"] .catalog-entry .ce-cols { color: rgba(255,255,255,0.6); }
-    section[data-testid="stSidebar"] .catalog-entry:hover { background: rgba(255,255,255,0.18); }
-    section[data-testid="stSidebar"] .catalog-entry:hover .ce-name,
-    section[data-testid="stSidebar"] .catalog-entry:hover .ce-rows,
-    section[data-testid="stSidebar"] .catalog-entry:hover .ce-cols { color: #FFFFFF; }
+    .catalog-entry:hover .ce-cols { color: rgba(255,255,255,0.85); }
 
     /* Schema info */
     .schema-info {
-        background: #FFFFFF;
-        border: 1px solid #000000;
-        border-radius: 0;
-        padding: 0.85rem 1rem;
-        margin-bottom: 1rem;
-        font-family: 'Source Serif 4', Georgia, serif;
-        font-size: 0.9rem;
-        color: var(--muted);
-        line-height: 1.6;
+        background: rgba(123,47,255,0.15);
+        border: 4px solid var(--max-quinary);
+        border-left: 8px solid var(--max-accent);
+        border-radius: 16px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.25rem;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.92rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.9);
+        line-height: 1.65;
+        box-shadow: 0 0 20px rgba(123,47,255,0.3);
     }
 
-    /* Pipeline steps (inside black sidebar) */
+    /* Pipeline steps */
     .pipeline-step {
         display: flex;
         align-items: flex-start;
         gap: 0.75rem;
-        padding: 0.6rem 0;
-        border-bottom: 1px solid rgba(255,255,255,0.2);
+        padding: 0.7rem 0;
+        border-bottom: 2px dashed rgba(255,58,242,0.2);
         font-size: 0.85rem;
     }
     .pipeline-step:last-child { border-bottom: none; }
     .pipeline-step .step-num {
         min-width: 2.5rem;
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        color: rgba(255,255,255,0.55);
+        font-family: 'Bungee', cursive;
+        font-weight: 400;
+        letter-spacing: 0.05em;
+        color: var(--max-tertiary);
+        text-shadow: 0 0 8px rgba(255,230,0,0.6);
     }
     .pipeline-step .step-body .step-title {
-        font-family: 'Playfair Display', Georgia, serif;
-        font-size: 1rem;
-        font-weight: 700;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 800;
         line-height: 1.35;
         color: #FFFFFF;
+        letter-spacing: 0.02em;
     }
     .pipeline-step .step-body .step-desc {
-        color: rgba(255,255,255,0.55);
-        font-size: 0.78rem;
+        color: rgba(255,255,255,0.45);
+        font-size: 0.73rem;
         line-height: 1.6;
-        margin-top: 0.15rem;
+        margin-top: 0.1rem;
+        font-family: 'JetBrains Mono', monospace;
     }
 
     /* Sidebar app name */
     .sidebar-app-name {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        font-family: 'Bungee', cursive;
+        font-size: 1.1rem;
+        font-weight: 400;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #FFFFFF;
+        display: inline-block;
+        background: linear-gradient(90deg, var(--max-accent), var(--max-quinary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
+        filter: drop-shadow(0 0 8px rgba(255,58,242,0.6));
     }
     .sidebar-app-version {
-        font-size: 0.73rem;
-        color: rgba(255,255,255,0.5);
-        margin-top: 0.1rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.68rem;
+        font-weight: 500;
+        color: rgba(255,255,255,0.4);
+        margin-top: 0.3rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
     }
 
     /* Tab section typography */
     .tab-section-title {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
-        color: #000000;
+        color: var(--max-tertiary);
         margin-bottom: 0.5rem;
         margin-top: 1.5rem;
+        padding: 0.35rem 0.75rem;
+        background: rgba(255,230,0,0.12);
+        border: 2px solid var(--max-tertiary);
+        border-radius: 999px;
+        display: inline-block;
+        text-shadow: 0 0 8px rgba(255,230,0,0.5);
+        box-shadow: 0 0 12px rgba(255,230,0,0.25);
     }
     .tab-section-desc {
-        font-family: 'Source Serif 4', Georgia, serif;
-        font-size: 1rem;
-        color: var(--muted);
-        line-height: 1.85;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.98rem;
+        font-weight: 400;
+        color: rgba(255,255,255,0.75);
+        line-height: 1.75;
         margin-bottom: 1rem;
+        margin-top: 0.5rem;
         max-width: 760px;
     }
     .tab-section-desc code {
         font-family: 'JetBrains Mono', monospace;
-        background: #FFFFFF;
-        color: #000000;
-        padding: 0 0.2rem;
-        border: 1px solid #000000;
-        border-radius: 0;
+        background: rgba(0,245,212,0.15);
+        color: var(--max-secondary);
+        padding: 0.1rem 0.35rem;
+        border: 2px solid var(--max-secondary);
+        border-radius: 6px;
+        font-weight: 700;
     }
 
     /* Compare label */
     .compare-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #000000;
+        color: var(--max-accent);
+        background: rgba(255,58,242,0.12);
         margin-bottom: 0.5rem;
-        padding-bottom: 0.35rem;
-        border-bottom: 1px solid #000000;
+        padding: 0.3rem 0.75rem;
+        display: inline-block;
+        border: 2px solid var(--max-accent);
+        border-radius: 999px;
+        box-shadow: 0 0 8px rgba(255,58,242,0.3);
     }
 
     /* Surface chip */
@@ -1313,34 +1472,43 @@ st.markdown(
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        padding: 0.25rem 0.6rem;
-        background: #FFFFFF;
-        border: 1px solid #000000;
-        border-radius: 0;
+        padding: 0.3rem 0.8rem;
+        background: rgba(45,27,78,0.6);
+        border: 3px solid var(--max-secondary);
+        border-radius: 999px;
+        box-shadow: 0 0 10px rgba(0,245,212,0.3);
     }
 
     /* ── Responsive ──────────────────────────────────────────────────── */
     @media (max-width: 900px) {
-        .page-header-title  { font-size: clamp(2.5rem, 13vw, 4.5rem); }
-        .page-header        { padding: 2rem 1rem 1.25rem; }
+        .page-header-title  { font-size: clamp(2rem, 10vw, 3.5rem); }
+        .page-header        { padding: 2rem 1rem 1.5rem; }
         [data-testid="stHorizontalBlock"] { flex-wrap: wrap; }
-        .stTabs [data-baseweb="tab"] { padding: 0.65rem; font-size: 0.68rem; letter-spacing: 0.05em; }
+        .stTabs [data-baseweb="tab"] { padding: 0.6rem 0.5rem; font-size: 0.64rem; letter-spacing: 0.06em; }
         .tree-container     { font-size: 0.76rem; padding: 1rem; }
         .metric-card        { min-width: 120px; }
-        .tab-section-desc   { font-size: 0.93rem; line-height: 1.75; }
+        .tab-section-desc   { font-size: 0.9rem; line-height: 1.65; }
         .pipeline-step      { font-size: 0.8rem; }
     }
 
     @media (max-width: 640px) {
-        .page-header-title  { font-size: clamp(2rem, 16vw, 3.5rem); }
+        .page-header-title  { font-size: clamp(1.75rem, 14vw, 2.75rem); }
         .page-header        { padding: 1.5rem 0.85rem 1rem; }
-        .page-header-desc   { font-size: 0.93rem; }
+        .page-header-desc   { font-size: 0.9rem; }
         .page-header-tags   { gap: 0.35rem; }
-        .stTabs [data-baseweb="tab"] { padding: 0.55rem 0.45rem; font-size: 0.62rem; letter-spacing: 0.03em; }
+        .stTabs [data-baseweb="tab"] { padding: 0.5rem 0.4rem; font-size: 0.58rem; letter-spacing: 0.03em; }
         .tab-section-desc   { font-size: 0.88rem; }
         .tree-container     { font-size: 0.7rem; padding: 0.85rem; }
-        .metric-card-value  { font-size: 1.35rem; }
+        .metric-card-value  { font-size: 1.5rem; }
         .main .block-container { padding-left: 0.85rem; padding-right: 0.85rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms;
+            animation-iteration-count: 1;
+            transition-duration: 0.15s;
+        }
     }
     </style>
     """,
