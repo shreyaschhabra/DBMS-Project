@@ -1,3 +1,5 @@
+NOTE: Branches funkyui and test are working as of now
+
 # ⚡ Mini Query Optimizer — SQL Engine Simulator
 
 A fully functional, interactive **SQL query optimization pipeline** built in pure Python. This project simulates the core query-planning subsystem of a relational database engine — from raw SQL text all the way to a physical execution plan — with a beautiful dark-themed Streamlit web interface.
